@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.kurai021.celegans-pet",
+  "name": "C. elegans Pet",
+  "version": "1.0.0",
+  "author": "kurai021",
+  "license": "MIT",
+  "description": "Una mascota virtual basada en el conectoma real de C. elegans.",
+  "kinds": ["bar-widget"],
+  "enabled": true,
+  "entryPoints": { "barWidget": "BarWidget.qml" },
+  "barWidget": {
+    "displayName": "C. elegans Pet",
+    "category": "Pets",
+    "allowMultiple": false,
+    "defaultSection": "center"
+  },
+  "keepLoaded": true
+}
+
