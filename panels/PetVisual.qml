@@ -1,7 +1,7 @@
 import QtQuick
 
-// Capa puramente visual + de interacción cruda. No conoce brainController
-// ni windowRef: solo dibuja el cuerpo ondulante y emite señales.
+// Purely visual + raw interaction layer. It doesn't know brainController
+// or windowRef: it only draws the undulating body and emits signals.
 Item {
     id: petVisual
     anchors.fill: parent
@@ -9,17 +9,17 @@ Item {
     signal clicked()
     signal dragged(real dx, real dy)
 
-    // Ajuste de ondas/fase para la ondulación
+    // Wave/phase adjustment for undulation
     property real phase: 0.0
     property real currentSpeed: 1.0
 
     property bool isStartled: false
 
-    // Animación suave de la ondulación del cuerpo
+    // Smooth animation of the body undulation
     NumberAnimation on phase {
         from: 0
         to: Math.PI * 2
-        // A mayor velocidad de los motores, menor duración (ondula más rápido)
+        // Higher motor speed, shorter duration (undulates faster)
         duration: Math.max(300, 1500 / Math.max(0.1, petVisual.currentSpeed))
         loops: Animation.Infinite
         running: true
@@ -36,7 +36,7 @@ Item {
             var ctx = getContext("2d");
             ctx.clearRect(0, 0, width, height);
 
-            // Puntos de control para el cuerpo del gusano (de cabeza a cola)
+            // Control points for the worm's body (from head to tail)
             var points = 17;
             var path = [];
 
@@ -46,12 +46,12 @@ Item {
             var stepY = (endY - startY) / (points - 1);
 
             for (var i = 0; i < points; i++) {
-                // Generar curva sinusoidal a lo largo del cuerpo
+                // Generate sinusoidal curve along the body
                 var wave = Math.sin(petVisual.phase - (i * 0.5)) * 18;
                 path.push({ x: centerX + wave, y: startY + (i * stepY) });
             }
 
-            // --- 1. DIBUJAR RESPLANDOR EXTERIOR (NEÓN) ---
+            // --- 1. DRAW OUTER GLOW (NEON) ---
             ctx.beginPath();
             ctx.moveTo(path[0].x, path[0].y);
             for (var j = 1; j < points; j++) {
@@ -63,7 +63,7 @@ Item {
             ctx.lineJoin = "round";
             ctx.stroke();
 
-            // --- 2. DIBUJAR CUERPO TRANSLÚCIDO ---
+            // --- 2. DRAW TRANSLUCENT BODY ---
             ctx.beginPath();
             ctx.moveTo(path[0].x, path[0].y);
             for (var k = 1; k < points; k++) {
@@ -73,7 +73,7 @@ Item {
             ctx.lineWidth = 8;
             ctx.stroke();
 
-            // --- 3. CABEZA DEL GUSANO ---
+            // --- 3. WORM HEAD ---
             ctx.beginPath();
             ctx.arc(path[0].x, path[0].y, 6, 0, 2 * Math.PI);
             ctx.fillStyle = "#00FFF0";
@@ -81,7 +81,7 @@ Item {
         }
     }
 
-    // Interacción táctil sobre el área del gusano
+    // Tactile interaction over the worm area
     MouseArea {
         id: mouseArea
         anchors.fill: parent

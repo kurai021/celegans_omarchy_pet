@@ -4,7 +4,7 @@
   "name": "C. elegans Pet",
   "version": "1.0.0",
   "author": "kurai021",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "description": "Una mascota virtual basada en el conectoma real de C. elegans.",
   "kinds": ["bar-widget"],
   "enabled": true,

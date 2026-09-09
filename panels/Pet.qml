@@ -1,20 +1,32 @@
 import QtQuick
 
-// Conector entre el cerebro (BrainConnector) y su posición dentro de la
-// ventana. brainController se INYECTA desde Main.qml como propiedad:
-// un id declarado en otro documento .qml no es visible aquí adentro.
+// Connector between the brain (BrainConnector) and its position within the
+// window. brainController is INJECTED from Main.qml as a property:
+// an id declared in another .qml document is not visible here.
 Item {
     id: petInstance
 
-    // Define que cualquier rotación se haga desde el centro del ítem
+    // Define that any rotation is done from the center of the item
     transformOrigin: Item.Center
     property var brainController: null
 
-    // Variable interna para dar algo de inercia o exploración caótica
+    // Internal variable to provide some inertia or chaotic exploration
     property real randomTurnFactor: 0.0
 
-    // Cada vez que el conectoma completa un ciclo, traducimos la fuerza
-    // motora izquierda/derecha en giro + desplazamiento dentro de la ventana.
+    property string currentMessage: ""
+    readonly property var phrases: [
+        "Don't touch me!",
+        "Gross!",
+        "Personal space, please!",
+        "I'm not a toy!",
+        "Stop it!",
+        "Go away!",
+        "I'm busy being a worm!",
+        "No touching!"
+    ]
+
+    // Every time the connectome completes a cycle, we translate the motor
+    // force left/right into rotation + displacement within the window.
     Connections {
         target: petInstance.brainController
         function onUpdated() {
@@ -25,18 +37,18 @@ Item {
             var left = petInstance.brainController.leftMotor
             var right = petInstance.brainController.rightMotor
 
-            // 1. Exploración caótica natural:
-            // Ocasionalmente añadimos un pequeño sesgo estocástico (ruido biológico)
+            // 1. Natural chaotic exploration:
+            // Occasionally we add a small stochastic bias (biological noise)
             if (Math.random() < 0.05) {
                 petInstance.randomTurnFactor = (Math.random() - 0.5) * 15.0;
             } else {
-                petInstance.randomTurnFactor *= 0.8; // Decaimiento suave
+                petInstance.randomTurnFactor *= 0.8; // Smooth decay
             }
 
             var forwardSpeed = (left + right) * 0.02
             var turnDiff = (left - right) + petInstance.randomTurnFactor
 
-            // Al modificar rotation, el elemento ahora girará sobre su centro
+            // By modifying rotation, the element now rotates around its center
             petInstance.rotation += turnDiff * 0.2
 
             var rad = petInstance.rotation * Math.PI / 180
@@ -46,19 +58,19 @@ Item {
             var maxX = petInstance.parent.width - petInstance.width
             var maxY = petInstance.parent.height - petInstance.height
 
-            // 2. Detección consciente de la pared:
-            // Si la nueva posición toca el borde, ESTIMULAMOS el conectoma
-            // en lugar de forzar un refraccionamiento matemático.
+            // 2. Conscious wall detection:
+            // If the new position touches the edge, we STIMULATE the connectome
+            // instead of forcing a mathematical refraction.
             if (newX <= 0 || newX >= maxX || newY <= 0 || newY >= maxY) {
                 if (petInstance.brainController) {
-                    // Estimulo mecanorreceptor frontal (choque con obstáculo)
+                    // Frontal mechanoreceptor stimulus (collision with obstacle)
                     petInstance.brainController.stimulateTouch()
                 }
 
-                // Giramos la orientación aleatoriamente para simular que el choque lo desorientó
+                // Randomly rotate orientation to simulate disorienting collision
                 petInstance.rotation += (Math.random() > 0.5 ? 90 : -90) + (Math.random() * 30 - 15);
             } else {
-                // Si la vía está libre, avanza normalmente
+                // If the path is clear, move forward normally
                 petInstance.x = newX;
                 petInstance.y = newY;
             }
@@ -68,14 +80,19 @@ Item {
     PetVisual {
         id: petVisual
         anchors.fill: parent
-        rotation: 90 // O -90, para alinear el dibujo vertical con el vector de movimiento horizontal
+        rotation: 90 // Or -90, to align vertical drawing with horizontal movement vector
         transformOrigin: Item.Center
 
-        // Un clic = estímulo táctil real sobre el conectoma
+        // A click = real tactile stimulus on the connectome
         onClicked: {
           if (petInstance.brainController) {
             petInstance.brainController.stimulateTouch();
-            // Feedback visual inmediato
+            petInstance.rotation += (Math.random() > 0.5 ? 90 : -90) + (Math.random() * 30 - 15);
+
+            petInstance.currentMessage = petInstance.phrases[Math.floor(Math.random() * petInstance.phrases.length)];
+            messageTimer.start();
+
+            // Immediate visual feedback
             petVisual.isStartled = true;
             flashTimer.start();
           }
@@ -87,7 +104,13 @@ Item {
           onTriggered: petVisual.isStartled = false
         }
 
-        // Arrastrar la mascota manualmente dentro de la ventana
+        Timer {
+          id: messageTimer
+          interval: 2000
+          onTriggered: petInstance.currentMessage = ""
+        }
+
+        // Manually drag the mascota manually within the window
         onDragged: (dx, dy) => {
             if (!petInstance.parent) return
 
@@ -95,6 +118,31 @@ Item {
             var maxY = petInstance.parent.height - petInstance.height
             petInstance.x = Math.max(0, Math.min(maxX, petInstance.x + dx))
             petInstance.y = Math.max(0, Math.min(maxY, petInstance.y + dy))
+        }
+    }
+
+    // Speech bubble for funny reactions
+    Rectangle {
+        id: bubble
+        visible: petInstance.currentMessage !== ""
+        color: "white"
+        radius: 8
+        border.color: "#ccc"
+        border.width: 1
+        rotation: -petInstance.rotation // Counter-rotate to stay upright
+        
+        width: bubbleText.width + 20
+        height: bubbleText.height + 10
+        x: (petInstance.width - width) / 2
+        y: -height - 10 // Positioned above the pet
+
+        Text {
+            id: bubbleText
+            anchors.centerIn: parent
+            text: petInstance.currentMessage
+            color: "black"
+            font.pixelSize: 12
+            font.bold: true
         }
     }
 }

@@ -1,8 +1,8 @@
 import QtQuick
 import "Celegans.js" as CElegans
 
-// Única fuente de verdad del conectoma: crea y avanza el cerebro,
-// y expone lo que Pet.qml necesita para moverse y reaccionar.
+// Single source of truth for the connectome: creates and advances the brain,
+// and exposes what Pet.qml needs to move and react.
 Item {
     id: brainController
 
@@ -10,22 +10,22 @@ Item {
     property real leftMotor: 0
     property real rightMotor: 0
 
-    // Se emite al final de cada ciclo de simulación (10 Hz)
+    // Emitted at the end of each simulation cycle (10 Hz)
     signal updated()
 
     Component.onCompleted: {
         brainInstance = new CElegans.Brain()
         brainInstance.setup()
 
-        // Sin esto, Brain.update() no ejecuta nada: el conectoma original
-        // necesita un estímulo activo (tacto u olfato) para propagar señales.
-        // Lo dejamos "explorando" de forma continua, como el robot original.
+        // Without this, Brain.update() does nothing: the original connectome
+        // needs an active stimulus (touch or smell) to propagate signals.
+        // We keep it "exploring" continuously, like the original robot.
         brainInstance.stimulateFoodSenseNeurons = true
     }
 
     property int touchCooldown: 0
 
-    // Pulso principal del conectoma (10 Hz)
+    // Main connectome pulse (10 Hz)
     Timer {
         interval: 100
         running: true
@@ -33,7 +33,7 @@ Item {
         onTriggered: {
             if (!brainController.brainInstance) return
 
-            // Mantener el estímulo activo durante varios ciclos de simulación
+            // Keep the stimulus active for several simulation cycles
               if (brainController.touchCooldown > 0) {
                 brainController.brainInstance.postSynaptic["ALML"][brainController.brainInstance.nextState] += 120
                 brainController.brainInstance.postSynaptic["ALMR"][brainController.brainInstance.nextState] += 120
@@ -55,11 +55,11 @@ Item {
         }
     }
 
-    // Estimula las neuronas táctiles anteriores (equivalente a tocar al gusano).
-    // ALML/ALMR son los nombres reales en el conectoma (no existe "ALM").
+    // Stimulates the anterior tactile neurons (equivalent to touching the worm).
+    // ALML/ALMR are the actual names in the connectome ("ALM" does not exist).
     function stimulateTouch() {
         if (!brainInstance) return
 
-        touchCooldown = 10 // Mantener el estímulo activo durante 10 ciclos de simulación (1 segundo)
+        touchCooldown = 10 // Keep the stimulus active for 10 simulation cycles (1 second)
     }
 }
