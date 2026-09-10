@@ -28,8 +28,8 @@ BarWidget {
     panelLoader.item.hostWidget = root
   }
 
-  implicitWidth: 80
-  implicitHeight: 40
+  implicitWidth: 25
+  implicitHeight: 20
 
   onBarChanged: injectPanel()
 
@@ -48,7 +48,7 @@ BarWidget {
     id: button
     anchors.fill: parent
     bar: root.bar
-    text: "🪱 Pet"
+    text: "🪱"
     tooltipText: "Open C. elegans Pet"
     onPressed: function(buttonCode) {
       if (buttonCode === Qt.LeftButton) root.toggle()
