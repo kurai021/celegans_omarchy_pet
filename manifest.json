@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "author": "kurai021",
   "license": "GPL-3.0",
-  "description": "Una mascota virtual basada en el conectoma real de C. elegans.",
+  "description": "A virtual pet based on the real connectome of C. elegans.",
   "kinds": ["bar-widget"],
   "enabled": true,
   "entryPoints": { "barWidget": "BarWidget.qml" },
