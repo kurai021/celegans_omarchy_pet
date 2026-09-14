@@ -18,7 +18,7 @@ omarchy plugin add https://github.com/kurai021/celegans-pet.git --enable
 - **Interaction**: 
   - **Touch**: Click on the worm's body to stimulate its tactile neurons.
   - **Move**: You can manually drag the pet across the window.
-  - **Feed**: Click on the empty water to drop a food pellet. The pet smells it and turns toward it through its chemo neurons (real chemotaxis), and eats when the nose reaches the pellet.
+  - **Feed**: Click on the empty water to drop a food pellet. The pet smells it and turns toward it through its chemo neurons (real chemotaxis), and eats when the nose reaches the pellet. How hard it hunts follows its appetite: a starving pet beelines to food, while a sated one (energy above ~90) ignores it and just ambles, only eating what it stumbles into — wait for it to get hungry again to feed it.
 - **Behavior**: The pet explores the space automatically, curving smoothly around walls and obstacles (no hardcoded turns — heading changes toward a geometrically computed escape direction). It gets hungry, gets sleepy, naps on its own, and speaks phrases according to its state (`{name}` is replaced by the configured name). Name, energy, sleep drive and lifetime stats persist between restarts.
 
 ## ⚙️ Configuration

@@ -43,6 +43,11 @@ Item {
     property real brainTurnGain: 0.05   // connectome signature on the heading
     property real steerLean: 0          // IIR-smoothed heading demand
     property real steerAlpha: 0.35      // smoothing weight for steerLean
+    property real huntFloor: 0.3        // hunt multiplier left at full energy
+    property real foodLureEnergy: 90   // above this the pet is "full": ignores food
+
+    // energy gate: re-uses lastSmell* probes only when the pet is actually
+    // hungry; a full pet wanders and only eats what it stumbles into.
     property real forwardProbe: 80      // how far the nose smells ahead
     property real sideProbeForward: 60  // lateral probes ride 60 px ahead
     property real sideProbeSpread: 24   // ... splayed 24 px to each side
@@ -126,6 +131,18 @@ Item {
             petVisual.currentSpeed = Math.max(0.4, Math.min(6.0,
                 (Math.abs(left) + Math.abs(right)) * 0.02 * energyFactor))
 
+            // hunger gates how hard the worm hunts: a full pet ambles past
+            // food, a hungry one homes in. hunt = 1 at 0 energy, and
+            // huntFloor at full energy (it still won't ignore a pellet that
+            // is right in its path). Above foodLureEnergy the pet is "full"
+            // and stops hunting entirely, wandering until energy drops again.
+            var hunger = petInstance.petState
+                ? 1 - Math.max(0, petInstance.petState.energy / 100)
+                : 1
+            var hunt = (petInstance.petState
+                && petInstance.petState.energy > petInstance.foodLureEnergy)
+                ? 0 : petInstance.huntFloor + (1 - petInstance.huntFloor) * hunger
+
             if (petInstance.petState) petInstance.petState.tick(100, moving)
 
             // --- go to sleep on your own ---
@@ -153,7 +170,7 @@ Item {
             var side = petInstance.lastSmellLeft - petInstance.lastSmellRight
             var gradientTurn = Math.max(-petInstance.maxGradientTurn,
                 Math.min(petInstance.maxGradientTurn,
-                    side * petInstance.gradientGain))
+                    side * petInstance.gradientGain * hunt))
             var brainSteer = (left - right) * petInstance.brainTurnGain
                 + gradientTurn
                 + petInstance.randomTurnFactor * (1 - 0.7 * focus)

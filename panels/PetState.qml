@@ -10,8 +10,9 @@ Item {
   id: state
 
   // --- persistent state ---------------------------------------------------
+  property real startEnergy: 65       // fresh-pet energy: green, not full, hungry
   property string petName: "Wormy"
-  property real energy: 60          // 0..100 (0 = starving)
+  property real energy: startEnergy   // 0..100 (0 = starving, >90 = "full")
   property real sleepiness: 0       // 0..1 (1 = ready to sleep)
   property bool asleep: false
   property var stats: { "distance": 0, "startled": 0, "meals": 0 }
