@@ -21,6 +21,25 @@ Item {
   property bool asleep: false
   property var stats: { "distance": 0, "startled": 0, "meals": 0 }
 
+  // --- learned memory (F2) ------------------------------------------------
+  // handToFood   : how often food appeared right after the user touched
+  //                (grows +1 per hand-feed right after a touch, decays slowly)
+  // touchExposure: accumulated user touches; drives habituation (response
+  //                scale shrinks toward a floor, tone softens, but the touch
+  //                stays unpleasant / negative)
+  // learnedOnce  : one-shot flag for the "I learned something" narrative;
+  //                the association itself keeps strengthening/decaying
+  // mealSites    : reserved for the future spatial-memory phase (F5); empty
+  //                for now. Persisted additively so old pet.json files load.
+  property var memory: { "handToFood": 0, "touchExposure": 0, "learnedOnce": false, "mealSites": {} }
+
+  // --- tuning (learning) --------------------------------------------------
+  property real handToFoodLearnThreshold: 5   // hand->food experiences to "get it"
+  property real handToFoodCap: 12             // soft cap so it can't runaway
+  property real handToFoodDecayPerSec: 1 / 240   // loses ~1 point / 4 min idle
+  property real touchExposureDecayPerSec: 1 / 600 // loses ~1 / 10 min idle
+  property real touchResponseFloor: 0.35         // habituated floor (>0: still feels it)
+
   // --- tuning -------------------------------------------------------------
   property real activeDrainPerSec: 0.12     // energy drained / s while moving
   property real idleDrainPerSec: 0.02       // energy drained / s while resting
@@ -64,6 +83,17 @@ Item {
           if (d.stats.startled !== undefined) stats.startled = Number(d.stats.startled) || 0;
           if (d.stats.meals !== undefined) stats.meals = Number(d.stats.meals) || 0;
         }
+        // Learned memory is additive: a pet.json without `memory` keeps the
+        // fresh defaults, so very old saves keep working untouched.
+        if (d.memory && typeof d.memory === "object") {
+          if (d.memory.handToFood !== undefined)
+            memory.handToFood = Math.max(0, Math.min(state.handToFoodCap, Number(d.memory.handToFood) || 0));
+          if (d.memory.touchExposure !== undefined)
+            memory.touchExposure = Math.max(0, Number(d.memory.touchExposure) || 0);
+          if (d.memory.learnedOnce !== undefined) memory.learnedOnce = !!d.memory.learnedOnce;
+          if (d.memory.mealSites !== undefined && typeof d.memory.mealSites === "object")
+            memory.mealSites = d.memory.mealSites;
+        }
       }
     } catch (e) { /* keep current values on malformed JSON */ }
     changed();
@@ -89,6 +119,55 @@ Item {
     return setName(name);
   }
 
+  // A user touch just happened. Accumulates exposure (habituation) and
+  // returns the response scale (1 = fully reactive, -> touchResponseFloor as
+  // exposure grows). Avoidance keeps its negative valence either way.
+  function recordTouch() {
+    memory.touchExposure = Math.min(60, (Number(memory.touchExposure) || 0) + 1);
+    save();
+    changed();
+    return touchResponseScale();
+  }
+
+  // How strongly a touch lands on the connectome after `touchExposure`
+  // touches. Exponential habituation that floors at touchResponseFloor: the
+  // pet never becomes indifferent, it just stops being alarmed.
+  function touchResponseScale() {
+    var e = Number(memory.touchExposure) || 0;
+    return Math.max(state.touchResponseFloor, Math.pow(0.9, e));
+  }
+
+  // A user-dropped pellet appeared right after a hand touch: +1 hand->food
+  // experience. Returns true the FIRST time the association crosses the
+  // learning threshold (once per pet lifetime -> the narrative event).
+  function recordHandFood() {
+    memory.handToFood = Math.min(state.handToFoodCap, (Number(memory.handToFood) || 0) + 1);
+    var first = !memory.learnedOnce && memory.handToFood >= state.handToFoodLearnThreshold;
+    if (first) memory.learnedOnce = true;
+    save();
+    changed();
+    return first;
+  }
+
+  // Idle decay so memories stay memories: without reinforcement both the
+  // hand->food association and the habituation slowly fade (real time, even
+  // while the panel is closed). Only Writes through throttle when something
+  // actually changed.
+  function decayMemory(seconds) {
+    var changedFlag = false;
+    var h = Number(memory.handToFood) || 0;
+    if (h > 0) {
+      var nh = Math.max(0, h - state.handToFoodDecayPerSec * seconds);
+      if (nh !== h) { memory.handToFood = nh; changedFlag = true; }
+    }
+    var t = Number(memory.touchExposure) || 0;
+    if (t > 0) {
+      var nt = Math.max(0, t - state.touchExposureDecayPerSec * seconds);
+      if (nt !== t) { memory.touchExposure = nt; changedFlag = true; }
+    }
+    if (changedFlag) save();
+  }
+
   // Throttle disk writes: state changes every simulation cycle.
   function save() {
     saveTimer.restart()
@@ -106,7 +185,13 @@ Item {
         energy: state.energy,
         sleepiness: state.sleepiness,
         asleep: state.asleep,
-        stats: { distance: state.stats.distance, startled: state.stats.startled, meals: state.stats.meals }
+        stats: { distance: state.stats.distance, startled: state.stats.startled, meals: state.stats.meals },
+        memory: {
+          handToFood: state.memory.handToFood,
+          touchExposure: state.memory.touchExposure,
+          learnedOnce: state.memory.learnedOnce,
+          mealSites: state.memory.mealSites
+        }
       };
       if (state.everNamed) {
         payload.petName = state.petName;
@@ -127,6 +212,7 @@ Item {
         state.energy = Math.max(0, state.energy - 1 / 300); // -1 point / 5 min
         if (state.energy <= 0) state.changed();
       }
+      state.decayMemory(1); // memories fade (or stay) in real time
     }
   }
 

@@ -31,6 +31,7 @@ Item {
     property real pendingSmellLeft: 0      // intensity to the pet's left
     property real pendingSmellRight: 0     // intensity to the pet's right
     property int touchCooldown: 0
+    property real pendingTouchScale: 1 // habituation factor (0..1) for the next touch
     property string pendingTouchSide: "none" // none | front | left | right
 
     // Tuning: how strongly the smell imbalance traduces into lateral charge.
@@ -66,14 +67,16 @@ Item {
                 var wr = 1.0
                 if (brainController.pendingTouchSide === "left") { wl = 0.6; wr = 1.4 }
                 else if (brainController.pendingTouchSide === "right") { wl = 1.4; wr = 0.6 }
-                brain.postSynaptic["ALML"][next] += 120 * wl
-                brain.postSynaptic["ALMR"][next] += 120 * wr
+                var charge = 120 * brainController.pendingTouchScale
+                brain.postSynaptic["ALML"][next] += charge * wl
+                brain.postSynaptic["ALMR"][next] += charge * wr
                 brain.stimulateNoseTouchNeurons = true
                 brainController.touchCooldown--
             } else {
                 brain.stimulateNoseTouchNeurons = false
             }
             brainController.pendingTouchSide = "none"
+            brainController.pendingTouchScale = 1
 
             // --- chemosense (food gradient) ---
             var sf = brainController.pendingSmellForward
@@ -120,9 +123,14 @@ Item {
 
     // Stimulates the anterior/body tactile neurons. `side` hints whether the
     // contact came from the front or one of the pet's flanks, which only
-    // tilts the otherwise symmetric reflex.
-    function stimulateTouch(side) {
+    // tilts the otherwise symmetric reflex. `chargeScale` (0..1) is the
+    // habituation factor: how strongly the stimulus lands on the connectome.
+    // 1 = full response (default), floor ~0.35 = habituated. The avoidance
+    // reflex itself stays intact; only the sensory charge is damped.
+    function stimulateTouch(side, chargeScale) {
         if (!brainInstance) return
+        var scale = (chargeScale === undefined || chargeScale === null) ? 1 : chargeScale
+        brainController.pendingTouchScale = Math.max(0, Math.min(1, scale))
         brainController.pendingTouchSide = side || "front"
         brainController.touchCooldown = 10 // keep the stimulus 1 second
     }

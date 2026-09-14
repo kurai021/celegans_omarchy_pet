@@ -26,7 +26,10 @@ Item {
   // --- interaction ---------------------------------------------------------
   property bool allowFoodDrop: true
   property bool autoFeedEnabled: false   // host (Panel) flips on when hungry
-  signal foodDropped(real x, real y)
+  // Emitted whenever a pellet appears. `source` is "hand" when the user
+  // clicked to drop it and "auto" when the auto feeder spawned it; Pet uses
+  // it to credit hand->food memories only for real hand actions.
+  signal foodDropped(real x, real y, string source)
 
   // Random pellet position free of obstacles (only used by the auto feeder).
   function randomClearSpot() {
@@ -54,7 +57,7 @@ Item {
     onTriggered: {
       if (!world.autoFeedEnabled || world.foodItems.length > 0) return
       var spot = world.randomClearSpot()
-      world.dropFood(spot.x, spot.y)
+      world.dropFood(spot.x, spot.y, "auto")
     }
   }
 
@@ -62,14 +65,15 @@ Item {
   signal foodEaten(real x, real y)
 
   // Drop a new pellet at aquarium coordinates (clamped, spaced from walls).
-  function dropFood(x, y) {
+  // `source` distinguishes a deliberate user drop ("hand") from auto-feeding.
+  function dropFood(x, y, source) {
     if (!world.allowFoodDrop || world.foodItems.length >= world.maxFood) return
     var r = 7
     x = Math.max(14, Math.min(world.width - 14, x))
     y = Math.max(14, Math.min(world.height - 14, y))
     var id = (world.foodItems.length ? world.foodItems[world.foodItems.length - 1].id : 0) + 1
     world.foodItems = world.foodItems.concat([{ "id": id, "x": x, "y": y, "r": r, "age": 0 }])
-    world.foodDropped(x, y)
+    world.foodDropped(x, y, source === "hand" ? "hand" : "auto")
     canvas.requestPaint()
   }
 
@@ -248,7 +252,7 @@ Item {
     anchors.fill: parent
     acceptedButtons: Qt.LeftButton
     onClicked: (mouse) => {
-      if (world.allowFoodDrop) world.dropFood(mouse.x, mouse.y)
+      if (world.allowFoodDrop) world.dropFood(mouse.x, mouse.y, "hand")
     }
   }
 }

@@ -46,6 +46,12 @@ Item {
     property real huntFloor: 0.3        // hunt multiplier left at full energy
     property real foodLureEnergy: 90   // above this the pet is "full": ignores food
 
+    // --- learning (F2) -----------------------------------------------------
+    property real handFoodWindowMs: 4000   // touch -> hand-drop counts this long
+    property real anticipationWindowMs: 6000 // learned touch primes food-seeking this long
+    property real lastHandFoodCreditAt: 0  // guards one credit per touch episode
+    property real touchTolerantThreshold: 8 // touches before phrases soften
+
     // energy gate: re-uses lastSmell* probes only when the pet is actually
     // hungry; a full pet wanders and only eats what it stumbles into.
     property real forwardProbe: 80      // how far the nose smells ahead
@@ -77,11 +83,47 @@ Item {
         petInstance.stateLabel = label
     }
 
+    // Learning: food dropped by the user's hand right after a touch credits a
+    // hand->food experience (+1, once per touch episode). The FIRST time the
+    // association crosses the threshold the pet plays the one-time narrative.
+    Connections {
+        target: petInstance.world
+        function onFoodDropped(x, y, source) {
+            if (source !== "hand" || !petInstance.petState) return
+            var now = Date.now()
+            if (petInstance.lastHandTouchAt <= 0) return
+            if (now - petInstance.lastHandTouchAt > petInstance.handFoodWindowMs) return
+            if (petInstance.lastHandTouchAt <= petInstance.lastHandFoodCreditAt) return
+            petInstance.lastHandFoodCreditAt = petInstance.lastHandTouchAt
+            if (petInstance.petState.recordHandFood())
+                petInstance.say("learned")
+        }
+    }
+
+    // After a user touch, how much the pet currently expects food nearby.
+    // Only real while the association is strong (the same threshold that
+    // produced the narrative) and fades linearly over the anticipation
+    // window. Modulates existing food-drive/focus signals, nothing else.
+    function anticipationStrength() {
+        if (!petInstance.petState || !petInstance.petState.memory
+            || !petInstance.petState.memory.learnedOnce) return 0
+        if (petInstance.petState.memory.handToFood < petInstance.petState.handToFoodLearnThreshold) return 0
+        var dt = Date.now() - petInstance.lastHandTouchAt
+        if (dt < 0 || dt > petInstance.anticipationWindowMs) return 0
+        return 1 - dt / petInstance.anticipationWindowMs
+    }
+
     readonly property var phrases: {
         "startle": [
             "Don't touch me!", "Gross!", "Personal space, please!",
             "I'm not a toy!", "Stop it!", "Go away!",
             "I'm busy being a worm!", "No touching!"
+        ],
+        "tolerant": [
+            "Okay, okay. Not scary anymore.",
+            "{name} is used to this now. Still don't love it.",
+            "You again. Fine, I got used to it.",
+            "Not dangerous. Just... don't.", "Yeah, yeah, I know your hand."
         ],
         "hungry": [
             "I'm so hungry...", "Feed me!", "{name} is starving...",
@@ -95,6 +137,9 @@ Item {
         ],
         "meal": [
             "Mmm!", "Delicious!", "More!", "*nom nom nom*", "Best day ever!"
+        ],
+        "learned": [
+            "🧠 {name} learned something — your hand often means food."
         ]
     }
 
@@ -163,6 +208,16 @@ Item {
                 && petInstance.petState.energy > petInstance.foodLureEnergy)
                 ? 0 : petInstance.huntFloor + (1 - petInstance.huntFloor) * hunger
 
+            // Learned anticipation: a few seconds after the hand touches, the
+            // pet that has learned "hand means food" primes its food drive and
+            // damps random meander. Only while it would hunt anyway (a full
+            // pet still ignores food). Modulates the existing drive/focus
+            // signals — no new movement machinery.
+            var anticipation = petInstance.anticipationStrength()
+            var expectFood = anticipation > 0 && petInstance.petState
+                && petInstance.petState.energy <= petInstance.foodLureEnergy
+            if (expectFood) hunt = Math.min(1, hunt + anticipation * 0.35)
+
             if (petInstance.petState) petInstance.petState.tick(100, moving)
 
             // --- go to sleep on your own ---
@@ -176,8 +231,9 @@ Item {
             }
 
             // biological noise, suppressed while homing in on food
+            // and while expecting food after a learned touch (alert, focused).
             var focus = Math.min(1, petInstance.lastSmellForward / 1.0)
-            if (Math.random() < 0.05 * (1 - 0.75 * focus)) {
+            if (Math.random() < 0.05 * (1 - 0.75 * focus) * (1 - 0.7 * anticipation)) {
                 petInstance.randomTurnFactor = (Math.random() - 0.5) * 15.0
             } else {
                 petInstance.randomTurnFactor *= 0.8
@@ -193,7 +249,7 @@ Item {
                     side * petInstance.gradientGain * hunt))
             var brainSteer = (left - right) * petInstance.brainTurnGain
                 + gradientTurn
-                + petInstance.randomTurnFactor * (1 - 0.7 * focus)
+                + petInstance.randomTurnFactor * (1 - 0.7 * focus) * (1 - 0.6 * anticipation)
             petInstance.steerLean = petInstance.steerLean * (1 - petInstance.steerAlpha)
                 + brainSteer * petInstance.steerAlpha
 
@@ -338,8 +394,11 @@ Item {
         // A click = real tactile stimulus on the connectome
         onClicked: {
             if (!petInstance.brainController) return
-            petInstance.lastHandTouchAt = Date.now() // feeds the "grumpy" state
-            petInstance.brainController.stimulateTouch("front")
+            petInstance.lastHandTouchAt = Date.now() // feeds "grumpy" + anticipation
+            var scale = petState ? petState.recordTouch() : 1 // habituation
+            petInstance.brainController.stimulateTouch("front", scale)
+            var usedToIt = petState && petState.memory
+                && petState.memory.touchExposure >= petInstance.touchTolerantThreshold
             if (petInstance.petState && petInstance.petState.asleep) {
                 petInstance.petState.wake()
                 petInstance.sleepCycles = 0
@@ -347,7 +406,7 @@ Item {
             } else {
                 petInstance.rotation += (Math.random() > 0.5 ? 90 : -90) + (Math.random() * 30 - 15)
                 if (petInstance.petState) petInstance.petState.addStartle()
-                petInstance.say("startle")
+                petInstance.say(usedToIt ? "tolerant" : "startle") // tone, not valence
             }
             petVisual.isStartled = true
             flashTimer.start()
