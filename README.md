@@ -18,7 +18,25 @@ omarchy plugin add https://github.com/kurai021/celegans-pet.git --enable
 - **Interaction**: 
   - **Touch**: Click on the worm's body to stimulate its tactile neurons.
   - **Move**: You can manually drag the pet across the window.
-- **Behavior**: The pet explores the space automatically. When it hits the window edges, the nervous system processes the stimulus and generates a motor response to turn and continue exploring.
+  - **Feed**: Click on the empty water to drop a food pellet. The pet smells it and turns toward it through its chemo neurons (real chemotaxis), and eats when the nose reaches the pellet.
+- **Behavior**: The pet explores the space automatically, curving smoothly around walls and obstacles (no hardcoded turns — heading changes toward a geometrically computed escape direction). It gets hungry, gets sleepy, naps on its own, and speaks phrases according to its state (`{name}` is replaced by the configured name). Name, energy, sleep drive and lifetime stats persist between restarts.
+
+## ⚙️ Configuration
+
+There is no settings form for bar widgets yet; widget settings live in the
+inline entry in `~/.config/omarchy/shell.json` and are declared by the
+`barWidget.schema` block in `manifest.json`. Change them from a terminal:
+
+```sh
+omarchy bar set io.github.kurai021.celegans-pet petName Citrus
+```
+
+`omarchy bar set <id> <key> <value>` writes the key through the shell's IPC and
+is picked up live (no plugin reload or shell restart needed). Use `--json` for
+values that are not plain strings.
+
+Persisted pet state (name, energy, sleep drive, stats) lives in
+`~/.local/state/io.github.kurai021.celegans-pet/pet.json`.
 
 ## 🛠️ Technical Details
 
