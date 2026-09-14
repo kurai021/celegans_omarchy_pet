@@ -7,14 +7,15 @@
   "license": "GPL-3.0",
   "description": "A virtual pet based on the real connectome of C. elegans.",
   "kinds": ["bar-widget"],
-  "enabled": true,
   "entryPoints": { "barWidget": "BarWidget.qml" },
   "barWidget": {
     "displayName": "C. elegans Pet",
     "category": "Pets",
     "allowMultiple": false,
-    "defaultSection": "center"
-  },
-  "keepLoaded": true
+    "defaultSection": "center",
+    "schema": [
+      { "key": "petName", "type": "string", "label": "Pet name", "defaultValue": "Wormy" }
+    ]
+  }
 }
 
