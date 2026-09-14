@@ -35,6 +35,11 @@ var Brain = function () {
   /* Use these to stimulate nose and food sensing neurons */
   this.stimulateNoseTouchNeurons = false;
   this.stimulateFoodSenseNeurons = false;
+
+  /* Observation log (read-only, does not affect dynamics): names of the
+   * neurons that fired during the most recent cycle. The Expert View reads
+   * it after each update — it is not part of the simulation. */
+  this.firedThisCycle = [];
 };
 
 Brain.prototype.setup = function () {
@@ -4780,6 +4785,8 @@ Brain.prototype.setup = function () {
 }
 
 Brain.prototype.update = function () {
+  /* Observation log for the current cycle (see constructor comment). */
+  this.firedThisCycle = [];
 
   // Snapshot de "nextState" ANTES del estímulo sensorial de este ciclo,
   // para que dendriteAccumulate() SÍ cuente como actividad nueva al
@@ -4820,6 +4827,7 @@ Brain.prototype.runconnectome = function (previousNext) {
     /* Muscles cannot fire, make sure they don't */
     if (this.muscles.indexOf(ps.substring(0, 3)) == -1 &&
       this.postSynaptic[ps][this.thisState] > this.fireThreshold) {
+      this.firedThisCycle.push(ps);
       this.fireNeuron(ps);
     }
   }

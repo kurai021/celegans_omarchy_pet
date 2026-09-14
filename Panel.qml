@@ -18,7 +18,7 @@ Panel {
   property string petNameSetting: root.setting("petName", "")
   onPetNameSettingChanged: root.seedSetting()
   Component.onCompleted: root.seedSetting()
-  onOpenedChanged: if (!root.opened) root.mindOpen = false
+  onOpenedChanged: if (!root.opened) { root.mindOpen = false; root.expertOpen = false }
 
   function seedSetting() {
     if (petState) petState.seedName(String(root.petNameSetting || ""))
@@ -49,6 +49,9 @@ Panel {
 
   property bool renameActive: false
   property bool mindOpen: false
+  // F4 Expert View: advanced read-only mode opened from the Mind overlay.
+  // While open, it pauses the Mind overlay and samples the connectome.
+  property bool expertOpen: false
 
   function commitRename() {
     var name = renameField.text
@@ -79,6 +82,14 @@ Panel {
     id: petState
   }
 
+  // Observation pipeline for the Expert View. Does zero work while the
+  // overlay is closed (its Connections are disabled), and never writes back.
+  Panels.ConnectomeMonitor {
+    id: monitor
+    brainController: brainController
+    active: root.expertOpen
+  }
+
   KeyboardPanel {
     id: panel
     bar: root.bar
@@ -86,8 +97,9 @@ Panel {
     owner: root.hostWidget || root
     open: root.opened
     focusTarget: keyCatcher
-    contentWidth: panel.fittedContentWidth(640)
-    contentHeight: panel.fittedContentHeight(480)
+    contentWidth: panel.fittedContentWidth(root.expertOpen ? 880 : 640)
+    contentHeight: panel.fittedContentHeight(root.expertOpen ? 640 : 480)
+    centerOnBar: root.expertOpen
 
     PanelKeyCatcher {
       id: keyCatcher
@@ -309,7 +321,7 @@ Panel {
         // nothing here feeds back into the simulation or moves the worm.
         Rectangle {
           id: mindOverlay
-          visible: root.mindOpen && !root.needsOnboarding
+          visible: root.mindOpen && !root.needsOnboarding && !root.expertOpen
           z: 100
           width: Math.min(parent.width - 40, 420)
           height: Math.min(parent.height - 70, 380)
@@ -338,8 +350,38 @@ Panel {
               }
 
               Item {
-                width: parent.width - mindTitle.width - closeMindBtn.width - parent.spacing
+                width: parent.width - mindTitle.width - expertBtn.implicitWidth
+                    - closeMindBtn.width - parent.spacing * 3
                 height: 1
+              }
+
+              Rectangle {
+                id: expertBtn
+                implicitWidth: expertBtnText.implicitWidth + 14
+                implicitHeight: 18
+                anchors.verticalCenter: parent.verticalCenter
+                radius: 9
+                color: Qt.rgba(0.35, 0.72, 0.88, 0.25)
+                border.color: Qt.rgba(0.55, 0.9, 1, 0.45)
+                border.width: 1
+
+                Text {
+                  id: expertBtnText
+                  anchors.centerIn: parent
+                  text: "🔬 expert"
+                  color: "white"
+                  font.pixelSize: 9
+                  font.bold: true
+                }
+
+                MouseArea {
+                  anchors.fill: parent
+                  onClicked: {
+                    // Enter the advanced (read-only) connectome view.
+                    root.mindOpen = false
+                    root.expertOpen = true
+                  }
+                }
               }
 
               Text {
@@ -444,6 +486,20 @@ Panel {
               }
             }
           }
+        }
+
+        // 🔬 F4 Expert View: read-only live connectome view. Opened from the
+        // Mind overlay; while it is open the simulator keeps running untouched
+        // and the monitor samples it (nothing here writes back).
+        Panels.ExpertView {
+          id: expertView
+          anchors.fill: parent
+          anchors.margins: 10
+          visible: root.expertOpen && !root.needsOnboarding
+          z: 102
+          pet: pet
+          monitor: monitor
+          onClosed: root.expertOpen = false
         }
       }
     }
