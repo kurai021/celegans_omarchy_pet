@@ -15,6 +15,14 @@ Item {
 
     property bool isStartled: false
 
+    // Set to false (e.g. while the panel is hidden) to stop repainting the
+    // canvas in the background: the shell is a long-running process.
+    property bool animating: true
+
+    // Curled resting pose: the body stops undulating and the "z" glyphs drift.
+    property bool sleeping: false
+    property real zzzPhase: 0
+
     // Smooth animation of the body undulation
     NumberAnimation on phase {
         from: 0
@@ -22,7 +30,15 @@ Item {
         // Higher motor speed, shorter duration (undulates faster)
         duration: Math.max(300, 1500 / Math.max(0.1, petVisual.currentSpeed))
         loops: Animation.Infinite
-        running: true
+        running: petVisual.animating && !petVisual.sleeping
+    }
+
+    NumberAnimation on zzzPhase {
+        from: 0
+        to: 14
+        duration: 1600
+        loops: Animation.Infinite
+        running: petVisual.sleeping
     }
 
     onPhaseChanged: canvas.requestPaint()
@@ -46,8 +62,10 @@ Item {
             var stepY = (endY - startY) / (points - 1);
 
             for (var i = 0; i < points; i++) {
-                // Generate sinusoidal curve along the body
-                var wave = Math.sin(petVisual.phase - (i * 0.5)) * 18;
+                // Generate sinusoidal curve along the body; a curled nap
+                // pose uses a much smaller amplitude.
+                var amp = petVisual.sleeping ? 5 : 18
+                var wave = Math.sin(petVisual.phase - (i * 0.5)) * amp;
                 path.push({ x: centerX + wave, y: startY + (i * stepY) });
             }
 
@@ -78,6 +96,18 @@ Item {
             ctx.arc(path[0].x, path[0].y, 6, 0, 2 * Math.PI);
             ctx.fillStyle = "#00FFF0";
             ctx.fill();
+
+            // --- 4. DREAMING "z" GLYPHS (while napping) ---
+            if (petVisual.sleeping) {
+                ctx.fillStyle = "rgba(180, 240, 245, 1)";
+                ctx.font = "bold 11px monospace";
+                var zDrop = petVisual.zzzPhase;
+                for (var zi = 0; zi < 3; zi++) {
+                    ctx.globalAlpha = 0.85 - zi * 0.25;
+                    ctx.fillText("z", path[0].x + 9 + zi * 5, path[0].y - 8 - zi * 9 - zDrop);
+                }
+                ctx.globalAlpha = 1;
+            }
         }
     }
 

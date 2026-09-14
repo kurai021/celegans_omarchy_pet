@@ -3,6 +3,15 @@ import "Celegans.js" as CElegans
 
 // Single source of truth for the connectome: creates and advances the brain,
 // and exposes what Pet.qml needs to move and react.
+//
+// The connectome receives two kinds of external sensory input, both injected
+// as electric charge into real sensory neurons:
+//  - touch:   ALML/ALMR (body mechanoreceptors) via stimulateTouch(side)
+//  - smell:   ADFL/ADFR (+ the rest of the chemo pool) by an asymmetric
+//             surplus current derived from the food gradient. Pet computes
+//             left/right/forward probes and hands them in with
+//             setChemoSense(); the actual turn comes out of the wiring
+//             (ADFL/ADFR -> AIZ/RIM/SMB/SMD -> body muscles).
 Item {
     id: brainController
 
@@ -10,56 +19,111 @@ Item {
     property real leftMotor: 0
     property real rightMotor: 0
 
+    // Set to false (e.g. while the panel is hidden) to pause the connectome
+    // and stop spending CPU on a pet nobody can see.
+    property bool simulationActive: true
+
     // Emitted at the end of each simulation cycle (10 Hz)
     signal updated()
+
+    // --- pending sensory input for the NEXT cycle -------------------------
+    property real pendingSmellForward: 0   // intensity straight ahead
+    property real pendingSmellLeft: 0      // intensity to the pet's left
+    property real pendingSmellRight: 0     // intensity to the pet's right
+    property int touchCooldown: 0
+    property string pendingTouchSide: "none" // none | front | left | right
+
+    // Tuning: how strongly the smell imbalance traduces into lateral charge.
+    // The surplus (left - right) is added to ADFL and subtracted from ADFR,
+    // so the real connectome turns toward the smellier side.
+    property real chemoSideWeight: 26
 
     Component.onCompleted: {
         brainInstance = new CElegans.Brain()
         brainInstance.setup()
 
-        // Without this, Brain.update() does nothing: the original connectome
-        // needs an active stimulus (touch or smell) to propagate signals.
-        // We keep it "exploring" continuously, like the original robot.
+        // Without a stimulus Brain.update() does nothing: the connectome
+        // needs active sensory input to propagate. The ambient food-sense
+        // drive below keeps the worm "exploring"; chemotaxis only adds an
+        // asymmetry on top of it when food is in range.
         brainInstance.stimulateFoodSenseNeurons = true
     }
-
-    property int touchCooldown: 0
 
     // Main connectome pulse (10 Hz)
     Timer {
         interval: 100
-        running: true
+        running: brainController.simulationActive
         repeat: true
         onTriggered: {
             if (!brainController.brainInstance) return
 
-            // Keep the stimulus active for several simulation cycles
-              if (brainController.touchCooldown > 0) {
-                brainController.brainInstance.postSynaptic["ALML"][brainController.brainInstance.nextState] += 120
-                brainController.brainInstance.postSynaptic["ALMR"][brainController.brainInstance.nextState] += 120
-                brainController.brainInstance.stimulateNoseTouchNeurons = true
+            var brain = brainController.brainInstance
+            var next = brain.nextState
+
+            // --- touch stimulus (body mechanoreceptors) ---
+            if (brainController.touchCooldown > 0) {
+                var wl = 1.0
+                var wr = 1.0
+                if (brainController.pendingTouchSide === "left") { wl = 0.6; wr = 1.4 }
+                else if (brainController.pendingTouchSide === "right") { wl = 1.4; wr = 0.6 }
+                brain.postSynaptic["ALML"][next] += 120 * wl
+                brain.postSynaptic["ALMR"][next] += 120 * wr
+                brain.stimulateNoseTouchNeurons = true
                 brainController.touchCooldown--
-              } else {
-                brainController.brainInstance.stimulateNoseTouchNeurons = false
-              }
+            } else {
+                brain.stimulateNoseTouchNeurons = false
+            }
+            brainController.pendingTouchSide = "none"
 
-            brainController.brainInstance.update()
+            // --- chemosense (food gradient) ---
+            var sf = brainController.pendingSmellForward
+            var sl = brainController.pendingSmellLeft
+            var sr = brainController.pendingSmellRight
+            if (sl > 0 || sr > 0 || sf > 0) {
+                // Surplus onto the smellier side steers through the wiring.
+                var bal = sl - sr
+                if (Math.abs(bal) > 0.02) {
+                    brain.postSynaptic["ADFL"][next] += brainController.chemoSideWeight * bal
+                    brain.postSynaptic["ADFR"][next] += -brainController.chemoSideWeight * bal
+                }
+                // Forward-food drive: food ahead raises overall chemo activity,
+                // keeping the run going instead of tumbling away.
+                var drive = brainController.chemoSideWeight * 0.4 * sf
+                if (drive > 0) {
+                    brain.postSynaptic["ADFL"][next] += drive
+                    brain.postSynaptic["ADFR"][next] += drive
+                }
+            }
+            brainController.pendingSmellForward = 0
+            brainController.pendingSmellLeft = 0
+            brainController.pendingSmellRight = 0
 
-            brainController.leftMotor = brainController.brainInstance.accumleft
-            brainController.rightMotor = brainController.brainInstance.accumright
+            brain.update()
 
-            brainController.brainInstance.accumleft = 0
-            brainController.brainInstance.accumright = 0
+            brainController.leftMotor = brain.accumleft
+            brainController.rightMotor = brain.accumright
+
+            brain.accumleft = 0
+            brain.accumright = 0
 
             brainController.updated()
         }
     }
 
-    // Stimulates the anterior tactile neurons (equivalent to touching the worm).
-    // ALML/ALMR are the actual names in the connectome ("ALM" does not exist).
-    function stimulateTouch() {
-        if (!brainInstance) return
+    // Prime the next cycle with the current smell gradient. Pet calls this
+    // right after updating (so it describes the pose the worm will hold).
+    function setChemoSense(forward, left, right) {
+        brainController.pendingSmellForward = forward
+        brainController.pendingSmellLeft = left
+        brainController.pendingSmellRight = right
+    }
 
-        touchCooldown = 10 // Keep the stimulus active for 10 simulation cycles (1 second)
+    // Stimulates the anterior/body tactile neurons. `side` hints whether the
+    // contact came from the front or one of the pet's flanks, which only
+    // tilts the otherwise symmetric reflex.
+    function stimulateTouch(side) {
+        if (!brainInstance) return
+        brainController.pendingTouchSide = side || "front"
+        brainController.touchCooldown = 10 // keep the stimulus 1 second
     }
 }
