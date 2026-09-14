@@ -83,6 +83,113 @@ Item {
         petInstance.stateLabel = label
     }
 
+    // --- mind overlay (F3) --------------------------------------------------
+    // The Mind overlay reads the SAME real signals the chip uses — no new
+    // simulation, no physics changes. eventLog keeps the recent notable
+    // moments (reassigned so list bindings update); mindDrivers / mindSummary
+    // answer "why is it doing this" with words, never raw numbers.
+    property var eventLog: []          // {time(ms), text}; newest first
+    property int maxMindEvents: 20
+    property int lastLoggedTouchAt: 0  // rate-limits touch events (no spam)
+    property bool mindInitialized: false
+    property var prevAsleep: false
+    property var prevLearnedOnce: false
+    property var prevExpecting: false
+    property var mindDrivers: []
+    property string lastDriversKey: ""
+    property int touchEventIntervalMs: 10000
+
+    // Human-readable "what happened" entries: pool is the emoji shown in the
+    // list, text the description. Optional t stamps a seed event at time 0
+    // (a state that was already true when the panel opened).
+    function logMindEvent(pool, text, t) {
+        var entry = {
+            "time": (t === undefined ? Date.now() : t),
+            "text": String(pool) + " " + String(text)
+        }
+        var log = petInstance.eventLog.slice()
+        log.unshift(entry)
+        if (log.length > petInstance.maxMindEvents) log = log.slice(0, petInstance.maxMindEvents)
+        petInstance.eventLog = log
+    }
+
+    // Called at the top of every cycle. Logs only real transitions (asleep,
+    // learned, anticipation onset) so the history never spams. The first call
+    // seeds the log with whatever was already true at open instead of
+    // pretending it just happened.
+    function detectMindTransitions() {
+        var s = petInstance.petState
+        if (!s) return
+        if (!petInstance.mindInitialized) {
+            petInstance.mindInitialized = true
+            petInstance.prevAsleep = s.asleep
+            petInstance.prevLearnedOnce = !!(s.memory && s.memory.learnedOnce)
+            if (s.asleep) petInstance.logMindEvent("💤", "fell asleep", 0)
+            if (petInstance.prevLearnedOnce)
+                petInstance.logMindEvent("🧠", "already knows your hand often means food", 0)
+            return
+        }
+        if (s.asleep && !petInstance.prevAsleep) petInstance.logMindEvent("💤", "fell asleep")
+        if (!s.asleep && petInstance.prevAsleep) petInstance.logMindEvent("⏰", "woke up")
+        petInstance.prevAsleep = s.asleep
+        var learned = !!(s.memory && s.memory.learnedOnce)
+        if (learned && !petInstance.prevLearnedOnce)
+            petInstance.logMindEvent("🧠", "learned that your hand often means food")
+        petInstance.prevLearnedOnce = learned
+        var expecting = petInstance.anticipationStrength() > 0
+        if (expecting && !petInstance.prevExpecting)
+            petInstance.logMindEvent("🧠", "expecting food")
+        petInstance.prevExpecting = expecting
+    }
+
+    // "Why" chips for the overlay, one qualitative line per live signal.
+    property var stateStory: {
+        "sleeping": "Napping. Energy creeps back with every breath; a click wakes it up.",
+        "grumpy": "A hand touched it moments ago — still sore about that.",
+        "hunting": "It caught a food scent and is homing in.",
+        "hungry": "Energy is below the feeding cutoff; food smell pulls it in.",
+        "full": "Well fed. It ambles past food now, only eating what it stumbles into.",
+        "resting": "Still for a few seconds, recharging before the next wander.",
+        "exploring": "Nothing in the air right now — just wandering."
+    }
+    function mindSummary() {
+        return petInstance.stateStory[petInstance.stateLabel] || petInstance.stateLabel
+    }
+
+    function describeDrivers() {
+        var d = []
+        var s = petInstance.petState
+        if (s) {
+            if (s.energy < 55) d.push({ icon: "⚡", text: "low energy — looking for food" })
+            else if (s.energy > petInstance.foodLureEnergy) d.push({ icon: "⚡", text: "well fed" })
+            else d.push({ icon: "⚡", text: "fed but could eat" })
+        }
+        var peak = Math.max(petInstance.lastSmellForward,
+            Math.max(petInstance.lastSmellLeft, petInstance.lastSmellRight))
+        if (peak > 0.03) {
+            var dir = "ahead"
+            if (petInstance.lastSmellRight > petInstance.lastSmellLeft
+                && petInstance.lastSmellRight > petInstance.lastSmellForward) dir = "to the right"
+            else if (petInstance.lastSmellLeft > petInstance.lastSmellRight
+                && petInstance.lastSmellLeft > petInstance.lastSmellForward) dir = "to the left"
+            d.push({ icon: "👃", text: "smells food " + dir })
+        } else {
+            d.push({ icon: "👃", text: "no food smell nearby" })
+        }
+        var dtHand = Date.now() - petInstance.lastHandTouchAt
+        if (petInstance.lastHandTouchAt > 0 && dtHand < 10000)
+            d.push({ icon: "✋", text: "touched by a hand recently" })
+        if (petInstance.anticipationStrength() > 0)
+            d.push({ icon: "🧠", text: "expects food — a touch usually means a meal" })
+        if (s) {
+            if (s.asleep) d.push({ icon: "💤", text: "asleep" })
+            else if (s.sleepiness > 0.6) d.push({ icon: "💤", text: "getting sleepy" })
+            else d.push({ icon: "💤", text: "rested" })
+        }
+        d.push({ icon: "🏃", text: petInstance.stillCycles >= 40 ? "sitting still" : "moving around" })
+        return d
+    }
+
     // Learning: food dropped by the user's hand right after a touch credits a
     // hand->food experience (+1, once per touch episode). The FIRST time the
     // association crosses the threshold the pet plays the one-time narrative.
@@ -160,6 +267,18 @@ Item {
         target: petInstance.brainController
         function onUpdated() {
             if (!petInstance.brainController || !petInstance.parent) return
+
+            // Mind interpretation first: log real transitions and refresh the
+            // "why" chips (drivers only reassign when the text actually
+            // changes, so the Flow doesn't relayout every cycle).
+            petInstance.detectMindTransitions()
+            var newDrivers = petInstance.describeDrivers()
+            var key = ""
+            for (var di = 0; di < newDrivers.length; di++) key += newDrivers[di].text + "|"
+            if (key !== petInstance.lastDriversKey) {
+                petInstance.mindDrivers = newDrivers
+                petInstance.lastDriversKey = key
+            }
 
             var left = petInstance.brainController.leftMotor
             var right = petInstance.brainController.rightMotor
@@ -352,6 +471,7 @@ Item {
 
             // --- eat when the nose reaches a pellet ---
             if (petInstance.world && petInstance.world.eatAt(cx, cy, petInstance.eatReach)) {
+                petInstance.logMindEvent("🍽️", "found and ate food")
                 if (petInstance.petState) petInstance.petState.addMeal()
                 petInstance.say("meal")
                 petVisual.isStartled = true
@@ -407,6 +527,13 @@ Item {
                 petInstance.rotation += (Math.random() > 0.5 ? 90 : -90) + (Math.random() * 30 - 15)
                 if (petInstance.petState) petInstance.petState.addStartle()
                 petInstance.say(usedToIt ? "tolerant" : "startle") // tone, not valence
+            }
+            var nowTouch = Date.now()
+            if (nowTouch - petInstance.lastLoggedTouchAt >= petInstance.touchEventIntervalMs) {
+                petInstance.lastLoggedTouchAt = nowTouch
+                petInstance.logMindEvent(usedToIt ? "😑"
+                    : "😣", usedToIt ? "got poked — old news by now"
+                    : "reacted to being touched")
             }
             petVisual.isStartled = true
             flashTimer.start()

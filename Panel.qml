@@ -18,6 +18,7 @@ Panel {
   property string petNameSetting: root.setting("petName", "")
   onPetNameSettingChanged: root.seedSetting()
   Component.onCompleted: root.seedSetting()
+  onOpenedChanged: if (!root.opened) root.mindOpen = false
 
   function seedSetting() {
     if (petState) petState.seedName(String(root.petNameSetting || ""))
@@ -30,10 +31,24 @@ Panel {
       root.pluginRegistry.setBarWidget(root.moduleName, "petName", String(name), {})
   }
 
+  // Human relative time for the Mind overlay's recent-events list.
+  function relativeTime(t) {
+    if (t <= 0) return "long ago"
+    var s = Math.floor((Date.now() - t) / 1000)
+    if (s < 10) return "just now"
+    if (s < 60) return s + "s ago"
+    var m = Math.floor(s / 60)
+    if (m < 60) return m + "m ago"
+    var h = Math.floor(m / 60)
+    if (h < 24) return h + "h ago"
+    return Math.floor(h / 24) + "d ago"
+  }
+
   readonly property bool needsOnboarding: root.opened
       && petState && !petState.everNamed && !root.petNameSetting
 
   property bool renameActive: false
+  property bool mindOpen: false
 
   function commitRename() {
     var name = renameField.text
@@ -158,6 +173,21 @@ Panel {
                 }
               }
             }
+
+            // Mind overlay toggle: reads "what is it doing / why" — read-only.
+            Text {
+              id: mindBtn
+              visible: !root.renameActive
+              height: 16
+              verticalAlignment: Text.AlignVCenter
+              text: "🧠"
+              opacity: root.mindOpen ? 1.0 : 0.55
+              font.pixelSize: 9
+              MouseArea {
+                anchors.fill: parent
+                onClicked: root.mindOpen = !root.mindOpen
+              }
+            }
           }
 
           // Fixed status chip (always available); bubbles cover one-off events.
@@ -269,6 +299,148 @@ Panel {
                   anchors.fill: parent
                   onClicked: root.commitOnboarding()
                 }
+              }
+            }
+          }
+        }
+
+        // 🧠 Mind overlay: reads what the pet is doing and why. Pure
+        // interpretation (state + drivers live in Pet.qml) + presentation —
+        // nothing here feeds back into the simulation or moves the worm.
+        Rectangle {
+          id: mindOverlay
+          visible: root.mindOpen && !root.needsOnboarding
+          z: 100
+          width: Math.min(parent.width - 40, 420)
+          height: Math.min(parent.height - 70, 380)
+          anchors.centerIn: parent
+          anchors.verticalCenterOffset: -6
+          radius: 12
+          color: Qt.rgba(0.08, 0.1, 0.14, 0.97)
+          border.color: Qt.rgba(0.45, 1, 0.9, 0.25)
+          border.width: 1
+
+          Column {
+            anchors.fill: parent
+            anchors.margins: 16
+            spacing: 8
+
+            Row {
+              width: parent.width
+              spacing: 6
+
+              Text {
+                id: mindTitle
+                text: "🧠 " + petState.petName + "'s mind"
+                color: "white"
+                font.pixelSize: 13
+                font.bold: true
+              }
+
+              Item {
+                width: parent.width - mindTitle.width - closeMindBtn.width - parent.spacing
+                height: 1
+              }
+
+              Text {
+                id: closeMindBtn
+                text: "✕"
+                color: Qt.rgba(0.82, 0.9, 0.88, 1)
+                font.pixelSize: 12
+                MouseArea {
+                  anchors.fill: parent
+                  onClicked: root.mindOpen = false
+                }
+              }
+            }
+
+            // Primary state: the same stable, hysteresis-backed chip label,
+            // plus one sentence of interpretation.
+            Text {
+              text: pet.stateLabelText
+              color: "white"
+              font.pixelSize: 15
+              font.bold: true
+            }
+
+            Text {
+              width: parent.width
+              wrapMode: Text.Wrap
+              text: pet.mindSummary()
+              color: Qt.rgba(0.82, 0.9, 0.88, 1)
+              font.pixelSize: 10
+            }
+
+            Text {
+              text: "Why:"
+              color: Qt.rgba(0.45, 1, 0.9, 1)
+              font.pixelSize: 9
+              font.bold: true
+            }
+
+            Flow {
+              width: parent.width
+              spacing: 4
+
+              Repeater {
+                model: pet.mindDrivers
+                delegate: Rectangle {
+                  implicitHeight: 16
+                  implicitWidth: driverText.width + 10
+                  radius: 8
+                  color: Qt.rgba(1, 1, 1, 0.08)
+
+                  Text {
+                    id: driverText
+                    anchors.centerIn: parent
+                    text: modelData.icon + " " + modelData.text
+                    color: "white"
+                    font.pixelSize: 9
+                  }
+                }
+              }
+            }
+
+            Text {
+              text: "Recent:"
+              color: Qt.rgba(0.45, 1, 0.9, 1)
+              font.pixelSize: 9
+              font.bold: true
+            }
+
+            ListView {
+              width: parent.width
+              height: 150
+              clip: true
+              spacing: 2
+              model: pet.eventLog.slice(0, 8)
+
+              delegate: Item {
+                width: ListView.view.width
+                height: 16
+
+                Text {
+                  text: modelData.text
+                  width: parent.width - 52
+                  elide: Text.ElideRight
+                  color: "white"
+                  font.pixelSize: 9
+                }
+
+                Text {
+                  text: root.relativeTime(modelData.time)
+                  anchors.right: parent.right
+                  color: Qt.rgba(0.6, 0.7, 0.7, 1)
+                  font.pixelSize: 8
+                }
+              }
+
+              Text {
+                visible: parent.count === 0
+                anchors.centerIn: parent
+                color: Qt.rgba(0.6, 0.7, 0.7, 1)
+                text: "Nothing yet — give the pet a moment."
+                font.pixelSize: 9
               }
             }
           }
