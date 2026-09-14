@@ -59,6 +59,24 @@ Item {
     }
 
     property string currentMessage: ""
+
+    // --- derived state (F1) -------------------------------------------------
+    // Every label below is backed by a real model signal so the chip never
+    // invents a state: sleeping = the real nap; hungry = the same < 55 cutoff
+    // the auto-feed uses; hunting = smell present while feeding drive active
+    // (distinct from merely hungry); full = the energy > foodLureEnergy rule
+    // that already stops hunting; resting = no movement for ~4 s (never a
+    // couple of still frames); grumpy = a user touch in the last 2.5 s.
+    property int stillCycles: 0          // consecutive cycles without movement
+    property real lastHandTouchAt: 0     // ms timestamp of the last user click
+    property string stateEmoji: "🔍"
+    property string stateLabel: "exploring"
+    readonly property string stateLabelText: petInstance.stateEmoji + " " + petInstance.stateLabel
+    function setState(emoji, label) {
+        petInstance.stateEmoji = emoji
+        petInstance.stateLabel = label
+    }
+
     readonly property var phrases: {
         "startle": [
             "Don't touch me!", "Gross!", "Personal space, please!",
@@ -108,6 +126,8 @@ Item {
                 petVisual.currentSpeed = 0.3 // near-static body during the nap
                 petInstance.lastSmellForward = 0
                 petInstance.randomTurnFactor = 0
+                petInstance.stillCycles = 0
+                petInstance.setState("💤", "sleeping")
                 // resting restores energy
                 petInstance.petState.energy = Math.min(100, petInstance.petState.energy + 0.08)
                 petInstance.sleepCycles++
@@ -281,6 +301,24 @@ Item {
                 petVisual.isStartled = true
                 flashTimer.start()
             }
+
+            // --- derived state for the HUD chip ---
+            petInstance.stillCycles = moving ? 0 : (petInstance.stillCycles + 1)
+            var peakSmell = Math.max(f0, Math.max(l0, r0))
+            var grumpy = Date.now() - petInstance.lastHandTouchAt < 2500
+            if (grumpy) {
+                petInstance.setState("😾", "grumpy")
+            } else if (peakSmell > 0.03 && hunt > 0.05) {
+                petInstance.setState("🍎", "hunting")
+            } else if (petInstance.petState && petInstance.petState.energy < 55) {
+                petInstance.setState("🍽️", "hungry")
+            } else if (petInstance.petState && petInstance.petState.energy > petInstance.foodLureEnergy) {
+                petInstance.setState("😌", "full")
+            } else if (petInstance.stillCycles >= 40) {
+                petInstance.setState("🌿", "resting")
+            } else {
+                petInstance.setState("🔍", "exploring")
+            }
         }
     }
 
@@ -300,6 +338,7 @@ Item {
         // A click = real tactile stimulus on the connectome
         onClicked: {
             if (!petInstance.brainController) return
+            petInstance.lastHandTouchAt = Date.now() // feeds the "grumpy" state
             petInstance.brainController.stimulateTouch("front")
             if (petInstance.petState && petInstance.petState.asleep) {
                 petInstance.petState.wake()

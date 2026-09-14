@@ -20,6 +20,9 @@ omarchy plugin add https://github.com/kurai021/celegans-pet.git --enable
   - **Move**: You can manually drag the pet across the window.
   - **Feed**: Click on the empty water to drop a food pellet. The pet smells it and turns toward it through its chemo neurons (real chemotaxis), and eats when the nose reaches the pellet. How hard it hunts follows its appetite: a starving pet beelines to food, while a sated one (energy above ~90) ignores it and just ambles, only eating what it stumbles into — wait for it to get hungry again to feed it.
 - **Behavior**: The pet explores the space automatically, curving smoothly around walls and obstacles (no hardcoded turns — heading changes toward a geometrically computed escape direction). It gets hungry, gets sleepy, naps on its own, and speaks phrases according to its state (`{name}` is replaced by the configured name). Name, energy, sleep drive and lifetime stats persist between restarts.
+- **Status chip**: A fixed chip under the name always shows the pet's *derived* state (`💤 sleeping`, `😾 grumpy`, `🍎 hunting`, `🍽️ hungry`, `😌 full`, `🌿 resting`, `🔍 exploring`). Every label is backed by a real model signal, never invented: sleep is the actual nap, hunger matches the `< 55` auto-feed cutoff, hunting means food is smelt *while* the appetite is active, full is the `> 90` rule that stops hunting, resting requires ~4 s without movement (not a couple of still frames), and grumpy is a real user touch in the last 2.5 s. One-off reactions (ouch, sleepy, meal...) stay in the speech bubble.
+- **Naming**: On first run (no saved name and no CLI seed) a small card asks you what to call the pet. Afterwards, click the ✏️ next to the name to rename it inline (Enter commits, Esc cancels).
+- **Name precedence**: `pet.json` is the single source of truth for the name. The CLI `petName` setting only seeds a name while the pet has never been named; once a name is persisted or set in the UI, an old setting value can never overwrite it.
 
 ## ⚙️ Configuration
 
@@ -34,6 +37,11 @@ omarchy bar set io.github.kurai021.celegans-pet petName Citrus
 `omarchy bar set <id> <key> <value>` writes the key through the shell's IPC and
 is picked up live (no plugin reload or shell restart needed). Use `--json` for
 values that are not plain strings.
+
+For `petName`, the CLI setting only applies as a **seed** while the pet has
+never been named (no `petName`/`everNamed` in `pet.json` yet). Once the pet has
+a persisted name it wins, so an old setting cannot undo a rename — renaming
+from the ✏️ in the panel keeps both `pet.json` and the setting in sync.
 
 Persisted pet state (name, energy, sleep drive, stats) lives in
 `~/.local/state/io.github.kurai021.celegans-pet/pet.json`.

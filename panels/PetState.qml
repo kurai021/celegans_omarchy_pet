@@ -11,7 +11,11 @@ Item {
 
   // --- persistent state ---------------------------------------------------
   property real startEnergy: 65       // fresh-pet energy: green, not full, hungry
+  // pet.json is the single source of truth for the name. everNamed flips true
+  // once the name is persisted or explicitly set, which permanently disables
+  // the CLI setting as a seed (it can never re-overwrite pet.json).
   property string petName: "Wormy"
+  property bool everNamed: false
   property real energy: startEnergy   // 0..100 (0 = starving, >90 = "full")
   property real sleepiness: 0       // 0..1 (1 = ready to sleep)
   property bool asleep: false
@@ -45,7 +49,13 @@ Item {
     try {
       var d = JSON.parse(String(file.text() || ""));
       if (d && typeof d === "object") {
-        if (d.petName !== undefined) petName = String(d.petName);
+        // A persisted name makes the pet "named" no matter what the setting
+        // says; a stored petName also implies everNamed for legacy saves.
+        if (d.everNamed !== undefined) everNamed = !!d.everNamed;
+        if (d.petName !== undefined) {
+          petName = String(d.petName);
+          if (!everNamed) everNamed = true;
+        }
         if (d.energy !== undefined) energy = Math.max(0, Math.min(100, Number(d.energy)));
         if (d.sleepiness !== undefined) sleepiness = Math.max(0, Math.min(1, Number(d.sleepiness)));
         if (d.asleep !== undefined) asleep = !!d.asleep;
@@ -59,6 +69,26 @@ Item {
     changed();
   }
 
+  // UI rename: applies unconditionally (the pet is already named at this
+  // point); persists to pet.json, the single source of truth.
+  function setName(name) {
+    var trimmed = String(name || "").trim();
+    if (!trimmed) return "";
+    petName = trimmed;
+    everNamed = true;
+    save();
+    changed();
+    return trimmed;
+  }
+
+  // CLI-setting seed: refuses to overwrite a persisted name. This is the one
+  // rule behind every rename path, so event order can never cause the setting
+  // to hijack pet.json.
+  function seedName(name) {
+    if (everNamed) return "";
+    return setName(name);
+  }
+
   // Throttle disk writes: state changes every simulation cycle.
   function save() {
     saveTimer.restart()
@@ -68,13 +98,21 @@ Item {
     id: saveTimer
     interval: 2000
     onTriggered: {
-      file.setText(JSON.stringify(
-        { petName: state.petName,
-          energy: state.energy,
-          sleepiness: state.sleepiness,
-          asleep: state.asleep,
-          stats: { distance: state.stats.distance, startled: state.stats.startled, meals: state.stats.meals } },
-        null, 2) + "\n");
+      // The name is only persisted once the pet is actually named. Until
+      // then (first run, onboarding not finished) pet.json deliberately has
+      // no petName, so an anonymous pet cannot silently become "Wormy" and
+      // the onboarding keeps showing on the next open.
+      var payload = {
+        energy: state.energy,
+        sleepiness: state.sleepiness,
+        asleep: state.asleep,
+        stats: { distance: state.stats.distance, startled: state.stats.startled, meals: state.stats.meals }
+      };
+      if (state.everNamed) {
+        payload.petName = state.petName;
+        payload.everNamed = true;
+      }
+      file.setText(JSON.stringify(payload, null, 2) + "\n");
     }
   }
 
