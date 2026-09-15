@@ -1,105 +1,103 @@
 # Experiments — C. elegans Pet
 
-El plugin no solo es una mascota: contiene un laboratorio reproducible de
-experimentos sobre su propio sistema nervioso. Cada fase vive aquí con su
-harness, sus resultados y su lectura en lenguaje humano.
+The plugin doubles as a small, reproducible experiment kit on its own nervous
+system. Each phase lives here with its harness, its results and a
+human-readable reading.
 
-## Fase C — Honesty Check (qué es real del conectoma)
+## Phase C — Honesty Check (what is really connectome)
 
-**Pregunta**: ¿cuánto de la navegación del pet hacia la comida emerge
-realmente del connectoma, y cuánto de las capas auxiliares de `Pet.qml`
-(steering Braitenberg, repulsión geométrica, ruido)?
+**Question**: how much of the pet's food-seeking navigation actually emerges
+from the connectome, and how much from the auxiliary layers in `Pet.qml`
+(Braitenberg steering, geometric repulsion, noise)?
 
-**Por qué importa**: el proyecto afirma de entrada que el movimiento sale de
-un conectoma real. Antes de añadir estímulos o modificar circuitos (fases B y
-A), queremos *medir* esa afirmación y ser capaces de decir qué parte es real y
-qué parte es envoltorio.
+**Why it matters**: the project starts from the claim that the movement comes
+from a real connectome. Before adding stimuli or modifying circuits (phases B
+and A), we want to *measure* that claim and be able to say which part is real
+and which part is wrapper.
 
-### Método
+### Method
 
-- El harness ejecuta el **`Celegans.js` real** (el mismo que `BrainConnector`),
-  ciclo a ciclo, con el **mismo orden de inyección de estímulo** (tacto →
-  olfato → `update()`).
-- Reproduce **exactamente** el steering/física de `Pet.qml` y el olor de
-  `World.qml` (sondas forward/left/right, falloff, giro gradiente Braitenberg,
-  firma del conectoma `(left-right)*brainTurnGain`, giro con límite de tasa,
-  reflejo de pared, nose-touch) para que lo medido coincida con la mascota
-  viva.
-- Entorno comparable: arena 640×480 sin rocas, 4 posiciones de pellet fijas.
-  Solo el rumbo inicial y el ruido biológico son aleatorios, y ambos están
-  **sembrados** (`--seed`) para que el experimento sea repetible.
-- Estado del organismo congelado (hambre media = energía 50, despierto): esta
-  fase mide *mecánica de navegación*, no ciclo de vida.
+- The harness runs the **real `Celegans.js`** (the same instance
+  `BrainConnector` uses), cycle by cycle, with the **same stimulus injection
+  order** (touch → smell → `update()`).
+- It reproduces **exactly** the steering/physics of `Pet.qml` and the smell of
+  `World.qml` (forward/left/right probes, falloff, Braitenberg gradient turn,
+  connectome signature `(left-right)*brainTurnGain`, rate-limited turn, wall
+  reflex, nose-touch) so what is measured matches the live pet.
+- Comparable environment: 640×480 arena without rocks, 4 fixed pellet
+  positions. Only the initial heading and the biological noise are random, and
+  both are **seeded** (`--seed`) so the experiment is repeatable.
+- Organism state frozen (mid hunger = energy 50, awake): this phase measures
+  *navigation mechanics*, not life cycle.
 
-### Configuraciones (matriz)
+### Configurations (matrix)
 
-| config        | chemoSideWeight | brainTurnGain | gradientGain | qué aísla |
-|---------------|-----------------|---------------|--------------|-----------|
-| control       | 26              | 0.05          | 300          | la mascota actual |
-| aux-off       | 26              | 0.05          | 0            | rumbo solo por el conectoma |
-| ct-strong-1x  | 60              | 0.5           | 0            | conectoma amplificado ×10 (sin aux) |
-| ct-strong-4x  | 120             | 1.0           | 0            | conectoma amplificado ×20 (sin aux) |
-| ct-off        | 26              | 0             | 300          | rumbo solo por la capa auxiliar |
-| all-off       | 26              | 0             | 0            | sin control de rumbo (random-walk) |
+| config        | chemoSideWeight | brainTurnGain | gradientGain | what it isolates              |
+|---------------|-----------------|---------------|--------------|-------------------------------|
+| control       | 26              | 0.05          | 300          | the current pet               |
+| aux-off       | 26              | 0.05          | 0            | heading driven by the connectome only |
+| ct-strong-1x  | 60              | 0.5           | 0            | connectome amplified ×10 (no aux) |
+| ct-strong-4x  | 120             | 1.0           | 0            | connectome amplified ×20 (no aux) |
+| ct-off        | 26              | 0             | 300          | heading driven by the auxiliary layer only |
+| all-off       | 26              | 0             | 0            | no heading control (random walk) |
 
-### Reproducir
+### Reproduce
 
 ```sh
-# dentro de la carpeta del plugin
-node experiments/honesty-check.js                 # semilla por defecto
-node experiments/honesty-check.js --seed=777      # cualquier otra semilla
-node experiments/honesty-check.js --trials=80     # más repeticiones
+# inside the plugin folder
+node experiments/honesty-check.js                 # default seed
+node experiments/honesty-check.js --seed=777      # any other seed
+node experiments/honesty-check.js --trials=80     # more repetitions
 ```
 
-Salida: tabla en consola + `experiments/results/c-<config>-<seed>.json` +
+Output: console table + `experiments/results/c-<config>-<seed>.json` +
 `experiments/results/honesty-matrix-<seed>.tsv`.
 
-### Resultados (40 trials por config)
+### Results (40 trials per config)
 
-Éxito = el pet alcanzó el pellet antes del límite (2000 ciclos ≈ 200 s).
+Success = the pet reached the pellet before the limit (2000 cycles ≈ 200 s).
 
-| config        | éxito (20260914) | éxito (777) | mediana ciclos→comida |
-|---------------|------------------|-------------|------------------------|
-| control       | 100 %            | 100 %       | 556 / 201              |
-| aux-off       | 62.5 %           | 60 %        | 810 / 587              |
-| ct-strong-1x  | 12.5 %           | 12.5 %      | 1460 / 985             |
-| ct-strong-4x  | 0 %              | 5 %         | — / 1195               |
-| ct-off        | 100 %            | 95 %        | 632 / 190              |
-| all-off       | 47.5 %           | 55 %        | 789 / 1010             |
+| config        | success (20260914) | success (777) | median cycles→food |
+|---------------|--------------------|---------------|---------------------|
+| control       | 100 %              | 100 %         | 556 / 201           |
+| aux-off       | 62.5 %             | 60 %          | 810 / 587           |
+| ct-strong-1x  | 12.5 %             | 12.5 %        | 1460 / 985          |
+| ct-strong-4x  | 0 %                | 5 %           | — / 1195            |
+| ct-off        | 100 %              | 95 %          | 632 / 190           |
+| all-off       | 47.5 %             | 55 %          | 789 / 1010          |
 
-(actividad neural ≈ 30–32 neuronas/ciclo en todas las configs; magnitud de
-músculos ≈ 107–114, casi simétrica `left-right ≈ –2`.)
+(neural activity ≈ 30–32 neurons/cycle in every config; muscle magnitude
+≈ 107–114, nearly symmetric `left-right ≈ –2`.)
 
-### Lectura (honesta)
+### Reading (honest)
 
-**Sí es del conectoma** (medible):
-- *Locomoción*: cada paso sale de `accumleft/accumright` (músculos del cuerpo
-  07–23). Ninguna capa auxiliar genera movimiento; si el connectoma no
-  impulsa, el pet no se mueve.
-- *Integración sensorial*: ~31 neuronas disparan por ciclo con el drive de
-  food-sense de fondo.
-- *Drive hacia la comida*: comida al frente → más carga en ADFL/ADFR → músculos.
-- *Reflejo de tacto* en colisiones (ALML/ALMR, nose-touch).
+**It is the connectome** (measurable):
+- *Locomotion*: every step comes from `accumleft/accumright` (body muscles
+  07–23). No auxiliary layer generates movement; if the connectome does not
+  drive, the pet does not move.
+- *Sensory integration*: ~31 neurons fire per cycle on the baseline food-sense
+  drive.
+- *Food drive*: food ahead → more charge in ADFL/ADFR → muscles.
+- *Touch reflex* on collisions (ALML/ALMR, nose-touch).
 
-**No es (o es envoltorio)**:
-- *Eficiencia de homing* (éxito y tiempo para llegar): la lleva la capa
-  auxiliar Braitenberg. Con el rumbo del conectoma anulado pero el asistente
-  activo (`ct-off`), el éxito se mantiene ~95–100 % y la velocidad es la de un
-  control. El random-walk puro (`all-off`) ya encuentra comida ~50 % de las
-  veces en esta arena pequeña.
-- *Evitación de obstáculos y reflejo de pared*: por inspección de código
-  (`Pet.qml`) son repulsión geométrica / reflexión física; no pasan por el
-  conectoma.
+**It is not (or it is wrapper)**:
+- *Homing efficiency* (success and time to arrive): carried by the auxiliary
+  Braitenberg layer. With the connectome heading killed but the assist on
+  (`ct-off`), success stays ~95–100 % and speed matches a control. Pure random
+  walk (`all-off`) already finds food ~50 % of the time in this small arena.
+- *Obstacle avoidance and wall reflex*: by code inspection (`Pet.qml`) they
+  are geometric repulsion / physical reflection; they do not go through the
+  connectome.
 
-**Hallazgo**: el conectoma *solo* navega ~60 % (`aux-off`), pero **amplificar
-su señal de rumbo ×10–20 colapsa el éxito al 5–13 %**. Con el mapa de
-inyección actual (surplus ADFL/ADFR → músculos), más señal ≠ mejor taxis:
-genera vaivén, no persecución. Esto nos dice que la afirmación "el conectoma
-guía" debe decirse con matiz — la parte sensorial/integración/motora es real;
-el taxis visible es sobre todo la capa auxiliar — y abre el siguiente ciclo:
-**B** (mejor modelado del estímulo) y **A** (afinar el circuito).
+**Finding**: the connectome *alone* navigates ~60 % (`aux-off`), but
+**amplifying its heading signal ×10–20 collapses success to 5–13 %**. With the
+current injection map (ADFL/ADFR surplus → muscles), more signal ≠ better
+taxis: it produces swing, not pursuit. This tells us the claim "the connectome
+guides" must be stated with nuance — the sensory/integration/motor part is
+real; the visible taxis is mostly the auxiliary layer — and it opens the next
+cycle: **B** (better stimulus modeling) and **A** (tuning the circuit).
 
-### Archivos
+### Files
 
-- `experiments/honesty-check.js` — harness reproducible.
-- `experiments/results/*.json`, `*.tsv` — resultados de cada corrida, por semilla.
+- `experiments/honesty-check.js` — reproducible harness.
+- `experiments/results/*.json`, `*.tsv` — results of each run, per seed.
