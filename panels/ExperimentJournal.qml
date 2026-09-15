@@ -39,11 +39,16 @@ Item {
     journal.entriesChanged()
   }
 
-  // Append an experiment (config + whatever we observed) and persist.
+  // Append an experiment (config + whatever we observed) and persist. New
+  // entries land at the FRONT so the newest is always the first the panel
+  // shows (the list renders in array order).
   function add(entry) {
     var e = entry || {}
+    var maxId = 0
+    for (var i = 0; i < journal.entries.length; i++)
+      if (journal.entries[i].id > maxId) maxId = journal.entries[i].id
     var next = {
-      "id": (journal.entries.length ? journal.entries[journal.entries.length - 1].id : 0) + 1,
+      "id": maxId + 1,
       "date": Date.now(),
       "type": e.type || "stimulus",
       "hypothesis": String(e.hypothesis || ""),
@@ -51,8 +56,7 @@ Item {
       "results": e.results || {},
       "observation": String(e.observation || "")
     }
-    var list = journal.entries.concat([next])
-    journal.entries = list
+    journal.entries = [next].concat(journal.entries)
     journal.save()
     return next
   }
