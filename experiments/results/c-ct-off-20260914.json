@@ -1,0 +1,11 @@
+{
+  "config": "ct-off",
+  "trials": 40,
+  "successRate": 100,
+  "medianCyclesToFood": 632,
+  "meanCyclesAll": 661,
+  "meanDistancePx": 838,
+  "meanSpikesPerCycle": 30.724,
+  "meanAbsLR": 108.6,
+  "meanLR": -2.17
+}

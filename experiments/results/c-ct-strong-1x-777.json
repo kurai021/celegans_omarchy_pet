@@ -1,0 +1,11 @@
+{
+  "config": "ct-strong-1x",
+  "trials": 40,
+  "successRate": 12.5,
+  "medianCyclesToFood": 985,
+  "meanCyclesAll": 1883,
+  "meanDistancePx": 2437,
+  "meanSpikesPerCycle": 31.912,
+  "meanAbsLR": 113.8,
+  "meanLR": -2.24
+}

@@ -1,0 +1,11 @@
+{
+  "config": "all-off",
+  "trials": 40,
+  "successRate": 55,
+  "medianCyclesToFood": 1010,
+  "meanCyclesAll": 1453,
+  "meanDistancePx": 1873,
+  "meanSpikesPerCycle": 31.635,
+  "meanAbsLR": 112.8,
+  "meanLR": -2.24
+}

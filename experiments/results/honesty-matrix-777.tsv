@@ -1,0 +1,7 @@
+config	seed	trials	success%	medCyclesToFood	meanCyclesAll	meanDistPx	spikesPerCycle	meanAbsLR	meanLR
+control	777	40	100	201.5	554	700	30.367	107.4	-2.16
+aux-off	777	40	60	587	1211	1564	31.382	111	-2.25
+ct-strong-1x	777	40	12.5	985	1883	2437	31.912	113.8	-2.24
+ct-strong-4x	777	40	5	1194.5	1960	2535	31.973	114.2	-2.26
+ct-off	777	40	95	190	587	745	30.485	107.4	-2.09
+all-off	777	40	55	1010	1453	1873	31.635	112.8	-2.24

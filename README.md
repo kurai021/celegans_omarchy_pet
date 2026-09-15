@@ -57,6 +57,20 @@ The plugin uses:
 - **celegans.js**: Contains the connectome implementation, managing neuron states and membrane potential updates.
 - **PetVisual.qml**: Draws the pet using a QML `Canvas`, creating a sinusoidal undulating effect that varies according to motor activity.
 
+## 🧪 Experiments
+
+The plugin doubles as a small, reproducible experimentation kit on its own
+nervous system. Each phase lives in [`experiments/`](experiments/README.md)
+with its harness, results and a human-readable reading.
+
+- **Phase C — Honesty Check** (done): measured how much of the pet's food
+  navigation comes from the real connectome versus the auxiliary navigation
+  layer. Bottom line: locomotion and sensory integration are genuinely
+  connectome-driven, but visible homing is mostly the auxiliary layer, and
+  amplifying the connectome's steering signal actually hurts navigation.
+  Full method, configurations and numbers in
+  [`experiments/README.md`](experiments/README.md).
+
 ## ⚖️ License
 
 This project is licensed under the **GNU GPL v3**.
