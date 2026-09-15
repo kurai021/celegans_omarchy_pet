@@ -22,7 +22,7 @@ Item {
             anchors.fill: parent
             anchors.margins: 6
             color: "white"
-            font.pixelSize: 9
+            font.pixelSize: 11
             selectByMouse: true
             verticalAlignment: TextInput.AlignVCenter
             text: field.value
@@ -41,6 +41,6 @@ Item {
         verticalAlignment: TextInput.AlignVCenter
         text: field.placeholder
         color: Qt.rgba(0.6, 0.6, 0.65, 1)
-        font.pixelSize: 9
+        font.pixelSize: 11
     }
 }

@@ -188,20 +188,20 @@ Component.onCompleted: {
                 // ---- header: F3 chip + context + close --------------------
                 Row {
                     width: parent.width
-                    height: 26
+                    height: 30
                     spacing: 8
 
                     Text {
                         id: titleTxt
                         text: "🧠 " + (pet ? pet.petName : "?") + " · expert view"
                         color: "white"
-                        font.pixelSize: 17
+                        font.pixelSize: 18
                         font.bold: true
                     }
 
                     Rectangle {
                         id: ctxChip
-                        height: 24
+                        height: 28
                         anchors.verticalCenter: parent.verticalCenter
                         implicitWidth: ctxText.width + 14
                         radius: 9
@@ -214,7 +214,7 @@ Component.onCompleted: {
                             anchors.centerIn: parent
                             text: pet ? pet.stateLabelText : ""
                             color: "white"
-                            font.pixelSize: 12
+                            font.pixelSize: 13
                             font.bold: true
                         }
                     }
@@ -229,7 +229,7 @@ Component.onCompleted: {
                             : expert.contextKey === "chemosensation" ? "chemosensation" : "motor order from " + (pet ? pet.petName : "the pet"))
                             + " circuit — " + (pet ? pet.mindSummary() : "")
                         color: Qt.rgba(0.82, 0.9, 0.88, 1)
-                        font.pixelSize: 12
+                        font.pixelSize: 13
                     }
 
                     Text {
@@ -237,7 +237,7 @@ Component.onCompleted: {
                         text: "✕"
                         anchors.verticalCenter: parent.verticalCenter
                         color: Qt.rgba(0.82, 0.9, 0.88, 1)
-                        font.pixelSize: 16
+                        font.pixelSize: 17
                         MouseArea {
                             anchors.fill: parent
                             onClicked: expert.close()
@@ -261,7 +261,7 @@ Component.onCompleted: {
                                 elide: Text.ElideRight
                                 text: expert.shortGroupName(modelData)
                                 color: Qt.rgba(0.82, 0.9, 0.88, 1)
-                                font.pixelSize: 10
+                                font.pixelSize: 12
                             }
 
                             Canvas {
@@ -311,7 +311,7 @@ Component.onCompleted: {
                             Text {
                                 text: "derived 0–1"
                                 color: Qt.rgba(0.55, 0.65, 0.65, 1)
-                                font.pixelSize: 9
+                                font.pixelSize: 11
                             }
                         }
                     }
@@ -330,7 +330,7 @@ Component.onCompleted: {
                         Text {
                             text: "neuron matrix · " + expert.graphCount + " cells"
                             color: Qt.rgba(0.82, 0.9, 0.88, 1)
-                            font.pixelSize: 12
+                            font.pixelSize: 13
                             font.bold: true
                         }
 
@@ -409,19 +409,19 @@ Component.onCompleted: {
                             Text {
                                 text: "charge (acc. input / threshold)"
                                 color: Qt.rgba(0.7, 0.8, 0.8, 1)
-                                font.pixelSize: 10
+                                font.pixelSize: 12
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                             Text {
                                 text: "·  ⬜ fired last cycle"
                                 color: Qt.rgba(0.7, 0.8, 0.8, 1)
-                                font.pixelSize: 10
+                                font.pixelSize: 12
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                             Text {
                                 text: "·  recently active"
                                 color: Qt.rgba(0.3, 1, 0.9, 0.9)
-                                font.pixelSize: 10
+                                font.pixelSize: 12
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                         }
@@ -441,7 +441,7 @@ Component.onCompleted: {
                             Text {
                                 text: "group tints (refer to the circuit)"
                                 color: Qt.rgba(0.55, 0.65, 0.65, 1)
-                                font.pixelSize: 9
+                                font.pixelSize: 11
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                         }
@@ -455,7 +455,7 @@ Component.onCompleted: {
                         Text {
                             text: "active circuit · real edges"
                             color: Qt.rgba(0.82, 0.9, 0.88, 1)
-                            font.pixelSize: 12
+                            font.pixelSize: 13
                             font.bold: true
                         }
 
@@ -507,7 +507,7 @@ Component.onCompleted: {
                                 var chain = expert.activeChain
                                 if (!layout || !layout.pos || layout.nodeCount === 0 || !chain || !chain.nodes) {
                                     ctx.fillStyle = Qt.rgba(0.3, 0.55, 0.5, 0.8)
-                                    ctx.font = "12px sans-serif"
+                                    ctx.font = "13px sans-serif"
                                     ctx.fillText("no live circuit here yet", 8, 18)
                                     return
                                 }
@@ -572,7 +572,7 @@ Component.onCompleted: {
                                     }
                                     if (isLabel(nn)) {
                                         ctx.fillStyle = "white"
-                                        ctx.font = "9px sans-serif"
+                                        ctx.font = "11px sans-serif"
                                         ctx.fillText(nn, cx - 10, cy - rad - 3)
                                     }
                                 }
@@ -585,7 +585,7 @@ Component.onCompleted: {
                             width: parent.width
                             wrapMode: Text.Wrap
                             color: "white"
-                            font.pixelSize: 10
+                            font.pixelSize: 12
                             text: expert.inspectorText()
                         }
 
@@ -594,7 +594,7 @@ Component.onCompleted: {
                             wrapMode: Text.Wrap
                             text: "charge = accumulated synaptic input (model units, capped at the firing threshold). Bars/sparklines are derived from sums of real charge; every circuit node and edge is an actual connection in Celegans.js."
                             color: Qt.rgba(0.55, 0.65, 0.65, 1)
-                            font.pixelSize: 9
+                            font.pixelSize: 11
                         }
                     }
                 }

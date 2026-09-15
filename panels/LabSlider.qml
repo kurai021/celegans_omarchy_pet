@@ -11,7 +11,7 @@ Item {
     signal changed()
 
     implicitWidth: 100
-    implicitHeight: 14
+    implicitHeight: 18
 
     Rectangle {
         anchors.fill: parent
@@ -52,6 +52,6 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         text: (slider.value * 100).toFixed(0)
         color: "white"
-        font.pixelSize: 8
+        font.pixelSize: 10
     }
 }

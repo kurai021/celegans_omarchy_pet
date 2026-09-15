@@ -1,4 +1,6 @@
 import QtQuick
+import Quickshell
+import Quickshell.Io
 
 // The pet's world: decorative obstacles the worm avoids and food pellets it
 // can smell and eat. Everything lives in this item's coordinate space (the
@@ -8,19 +10,100 @@ import QtQuick
 Item {
   id: world
 
-  // Static decor placed by the host (Panel). Each: { x, y, width, height }.
-  property var obstacleLayout: [
-    { "x": 36,  "y": 116, "width": 44, "height": 34 },
-    { "x": 552, "y": 92,  "width": 40, "height": 44 },
-    { "x": 124, "y": 396, "width": 50, "height": 32 },
-    { "x": 470, "y": 352, "width": 42, "height": 38 },
-    { "x": 324, "y": 58,  "width": 36, "height": 28 },
-    { "x": 238, "y": 246, "width": 46, "height": 34 },
-    { "x": 400, "y": 520, "width": 37, "height": 45 },
-    { "x": 600, "y": 480, "width": 46, "height": 28 },
-    { "x": 800, "y": 400, "width": 44, "height": 38 },
-    { "x": 750, "y": 575, "width": 50, "height": 32 },
-  ]
+  // Obstacle decor is RANDOM: sizes and spots are chosen fresh on the very
+  // first start (no world.json yet) and every time the pet's name is reset,
+  // then persisted so every reload keeps the same "tank configuration". The
+  // generation keeps rocks off the walls and apart from each other (they
+  // never overlap or clump), and leaves the centre clear where the worm
+  // appears. Each rock: { x, y, width, height }.
+  property var obstacleLayout: []
+  property bool layoutApplied: false
+  readonly property string stateDir: (Quickshell.env("XDG_STATE_HOME")
+      || (Quickshell.env("HOME") || "") + "/.local/state") + "/io.github.kurai021.celegans-pet"
+  readonly property string worldFile: stateDir + "/world.json"
+
+  // --- obstacle persistence --------------------------------------------------
+  // world.json lives next to pet.json. On very first start there is no file
+  // yet, so we generate one decor; every later start reuses the saved layout
+  // (as long as the tank size is unchanged). Name resets (host calls
+  // regenerateObstacles()) draw a brand-new random layout and overwrite the
+  // file, so the decor is a fresh surprise each time.
+  Process {
+    id: mkdirStateDir
+    command: ["mkdir", "-p", world.stateDir]
+  }
+
+  FileView {
+    id: worldFile
+    path: world.worldFile
+    watchChanges: false
+    printErrors: false
+    onLoaded: Qt.callLater(function() { world.applyWorldFile() })
+    onLoadFailed: Qt.callLater(function() { world.applyWorldFile() })
+  }
+
+  onWidthChanged: world.applyWorldFile()
+  onHeightChanged: world.applyWorldFile()
+
+  // Applies the persisted decor exactly once the tank has a real size; if the
+  // file is missing or was saved for a different tank size, we draw a fresh
+  // one instead (which also persists it for next time).
+  function applyWorldFile() {
+    if (world.layoutApplied || world.width <= 0 || world.height <= 0) return
+    try {
+      var d = JSON.parse(worldFile.text() || "null")
+      if (d && Array.isArray(d.rocks) && d.width === world.width && d.height === world.height) {
+        world.obstacleLayout = d.rocks
+        world.layoutApplied = true
+        canvas.requestPaint()
+        return
+      }
+    } catch (e) { /* fall through: corrupt or foreign file -> regenerate */ }
+    world.regenerateObstacles()
+  }
+
+  // Fresh random decor: random sizes, spread out across the tank. Rocks stay
+  // `margin` away from the walls, keep at least `gap` between neighbours (no
+  // overlaps, no touching), and clear a central band where the worm appears.
+  function regenerateObstacles() {
+    var w = world.width
+    var h = world.height
+    if (w <= 0 || h <= 0) return
+    var count = 10 + Math.floor(Math.random() * 3)    // 10..12 rocks
+    var margin = 28
+    var gap = 26
+    var rockMinW = 30, rockMaxW = 56
+    var rockMinH = 24, rockMaxH = 46
+    var rocks = []
+    var attempts = 0
+    while (rocks.length < count && attempts < 600) {
+      attempts++
+      var rw = rockMinW + Math.random() * (rockMaxW - rockMinW)
+      var rh = rockMinH + Math.random() * (rockMaxH - rockMinH)
+      var x = margin + Math.random() * Math.max(1, w - 2 * margin - rw)
+      var y = margin + Math.random() * Math.max(1, h - 2 * margin - rh)
+      // Keep the spawning area (tank centre) clear.
+      if (Math.abs(x + rw / 2 - w / 2) < 85 && Math.abs(y + rh / 2 - h / 2) < 70) continue
+      var ok = true
+      for (var i = 0; i < rocks.length; i++) {
+        var o = rocks[i]
+        if (x < o.x + o.width + gap && x + rw + gap > o.x
+            && y < o.y + o.height + gap && y + rh + gap > o.y) { ok = false; break }
+      }
+      if (ok) rocks.push({ "x": x, "y": y, "width": rw, "height": rh })
+    }
+    world.obstacleLayout = rocks
+    world.layoutApplied = true
+    world.saveLayout()
+    canvas.requestPaint()
+  }
+
+  function saveLayout() {
+    worldFile.setText(JSON.stringify({ "width": world.width, "height": world.height,
+        "rocks": world.obstacleLayout }, null, 2) + "\n")
+  }
+
+  Component.onCompleted: mkdirStateDir.running = true
 
   // --- food ----------------------------------------------------------------
   property int maxFood: 6

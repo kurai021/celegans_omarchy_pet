@@ -16,7 +16,7 @@ Item {
     signal changed(real w)
     signal remove()
 
-    height: 44
+    height: 50
     width: parent ? parent.width : 220
 
     Rectangle {
@@ -38,16 +38,16 @@ Item {
                 Text {
                     text: row.from + " → " + row.to
                     color: "white"
-                    font.pixelSize: 9
+                    font.pixelSize: 10
                     font.bold: true
                     elide: Text.ElideRight
-                    width: 108
+                    width: 116
                 }
 
                 Text {
                     text: "base " + row.base
                     color: Qt.rgba(0.55, 0.65, 0.65, 1)
-                    font.pixelSize: 8
+                    font.pixelSize: 9
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
@@ -55,17 +55,17 @@ Item {
                     text: row.weight === row.base ? "= " + row.base : "→ " + row.weight
                     color: row.weight === row.base ? Qt.rgba(0.6, 0.7, 0.7, 1)
                         : (row.weight > row.base ? "#6fdd8c" : "#e08a6a")
-                    font.pixelSize: 8
+                    font.pixelSize: 9
                     font.bold: row.weight !== row.base
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
-                Item { width: parent.parent.width - 200; height: 1 }
+                Item { width: parent.parent.width - 230; height: 1 }
 
                 Text {
                     text: "✕"
                     color: Qt.rgba(0.9, 0.6, 0.6, 1)
-                    font.pixelSize: 9
+                    font.pixelSize: 10
                     anchors.verticalCenter: parent.verticalCenter
                     MouseArea {
                         anchors.fill: parent
@@ -80,7 +80,7 @@ Item {
 
                 WeightSlider {
                     id: slider
-                    width: parent.width - 60
+                    width: parent.width - 64
                     value: Math.max(0, Math.min(1, row.weight / row.maxWeight))
                     onChangedValue: {
                         row.weight = v * row.maxWeight
@@ -91,14 +91,14 @@ Item {
                 Text {
                     text: "0"
                     color: Qt.rgba(0.75, 0.8, 0.8, 1)
-                    font.pixelSize: 7
+                    font.pixelSize: 8
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
                 Text {
                     text: "∓"
                     color: Qt.rgba(0.7, 1, 0.95, 1)
-                    font.pixelSize: 9
+                    font.pixelSize: 10
                     font.bold: true
                     anchors.verticalCenter: parent.verticalCenter
                     MouseArea {

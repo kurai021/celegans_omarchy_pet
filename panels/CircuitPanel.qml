@@ -469,20 +469,20 @@ Item {
                 // header
                 Row {
                     width: parent.width
-                    height: 26
+                    height: 30
                     spacing: 8
 
                     Text {
                         id: titleTxt
                         text: "🧬 " + (pet ? pet.petName : "?") + " · circuit lab"
                         color: "white"
-                        font.pixelSize: 17
+                        font.pixelSize: 18
                         font.bold: true
                     }
 
                     Rectangle {
                         id: runChip
-                        height: 24
+                        height: 28
                         anchors.verticalCenter: parent.verticalCenter
                         implicitWidth: runText.implicitWidth + 14
                         radius: 9
@@ -495,7 +495,7 @@ Item {
                             anchors.centerIn: parent
                             text: circuit.running ? "● editing wiring" : "◦ idle"
                             color: "white"
-                            font.pixelSize: 12
+                            font.pixelSize: 13
                             font.bold: true
                         }
                     }
@@ -508,7 +508,7 @@ Item {
                         elide: Text.ElideRight
                         text: "real synapses · edit a weight, watch the worm react"
                         color: Qt.rgba(0.9, 0.85, 0.94, 1)
-                        font.pixelSize: 12
+                        font.pixelSize: 13
                     }
 
                     Text {
@@ -516,7 +516,7 @@ Item {
                         text: "🧠 mind"
                         anchors.verticalCenter: parent.verticalCenter
                         color: Qt.rgba(0.7, 1, 0.95, 1)
-                        font.pixelSize: 10
+                        font.pixelSize: 12
                         MouseArea {
                             anchors.fill: parent
                             onClicked: circuit.toMind()
@@ -528,7 +528,7 @@ Item {
                         text: "✕"
                         anchors.verticalCenter: parent.verticalCenter
                         color: Qt.rgba(0.9, 0.85, 0.94, 1)
-                        font.pixelSize: 16
+                        font.pixelSize: 17
                         MouseArea {
                             anchors.fill: parent
                             onClicked: circuit.close()
@@ -552,21 +552,21 @@ Item {
                             Text {
                                 text: "synapse editor"
                                 color: Qt.rgba(0.9, 0.85, 0.94, 1)
-                                font.pixelSize: 12
+                                font.pixelSize: 13
                                 font.bold: true
                                 anchors.verticalCenter: parent.verticalCenter
                             }
 
                             Rectangle {
-                                width: 64
-                                height: 18
+                                width: 76
+                                height: 22
                                 radius: 9
                                 color: Qt.rgba(0.7, 0.6, 0.95, 0.22)
                                 Text {
                                     anchors.centerIn: parent
                                     text: circuit.expanded ? "⋮ all cells" : "focus pool"
                                     color: "white"
-                                    font.pixelSize: 8
+                                    font.pixelSize: 10
                                     font.bold: true
                                 }
                                 MouseArea {
@@ -580,7 +580,7 @@ Item {
                             Text {
                                 text: circuit.viewKeys.length + " / " + editorModel.count + " synapses"
                                 color: Qt.rgba(0.7, 0.7, 0.75, 1)
-                                font.pixelSize: 8
+                                font.pixelSize: 10
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                         }
@@ -589,7 +589,7 @@ Item {
                         // (and dim presets that don't touch it).
                         CircuitField {
                             width: parent.width
-                            height: 22
+                            height: 26
                             placeholder: "filter: neuron (e.g. ADFL)"
                             value: circuit.filterText
                             onEdited: function(v) { circuit.filterText = v; circuit.rebuildView() }
@@ -603,7 +603,7 @@ Item {
                             Repeater {
                                 model: circuit.presets
                                 delegate: Rectangle {
-                                    implicitHeight: 20
+                                    implicitHeight: 24
                                     implicitWidth: presetTxt.implicitWidth + 12
                                     radius: 8
                                     color: Qt.rgba(0.55, 0.45, 0.9, 0.2)
@@ -620,7 +620,7 @@ Item {
                                         anchors.centerIn: parent
                                         text: modelData.label
                                         color: "white"
-                                        font.pixelSize: 9
+                                        font.pixelSize: 11
                                         font.bold: true
                                     }
                                     MouseArea {
@@ -641,14 +641,14 @@ Item {
                                 elide: Text.ElideRight
                                 text: circuit.patchSummary
                                 color: Qt.rgba(0.75, 0.8, 0.85, 1)
-                                font.pixelSize: 8
+                                font.pixelSize: 10
                                 anchors.verticalCenter: parent.verticalCenter
                             }
 
                             Text {
                                 text: "✳ clear"
                                 color: Qt.rgba(0.9, 0.6, 0.6, 1)
-                                font.pixelSize: 9
+                                font.pixelSize: 11
                                 anchors.verticalCenter: parent.verticalCenter
                                 MouseArea {
                                     anchors.fill: parent
@@ -660,7 +660,7 @@ Item {
                         // editable synapses
                         Rectangle {
                             width: parent.width
-                            height: 330
+                            height: 350
                             radius: 10
                             color: Qt.rgba(1, 1, 1, 0.04)
                             border.color: Qt.rgba(0.9, 0.75, 1, 0.15)
@@ -695,7 +695,7 @@ Item {
                                     anchors.centerIn: parent
                                     text: "no synapses to edit"
                                     color: Qt.rgba(0.6, 0.7, 0.7, 1)
-                                    font.pixelSize: 9
+                                    font.pixelSize: 11
                                 }
                             }
                         }
@@ -708,7 +708,7 @@ Item {
                             Text {
                                 text: "create a (new) connection"
                                 color: Qt.rgba(0.7, 0.7, 0.75, 1)
-                                font.pixelSize: 9
+                                font.pixelSize: 11
                                 font.bold: true
                             }
 
@@ -719,7 +719,7 @@ Item {
 CircuitField {
                                   id: fromEdit
                                   width: (parent.width - 10) / 2
-                                  height: 22
+                                  height: 26
                                   placeholder: "from cell (ADFL)"
                                   value: circuit.fromField
                                   onEdited: function(v) { circuit.fromField = v }
@@ -727,7 +727,7 @@ CircuitField {
                                 CircuitField {
                                   id: toEdit
                                   width: (parent.width - 10) / 2
-                                  height: 22
+                                  height: 26
                                   placeholder: "to cell (SMDVL)"
                                   value: circuit.toField
                                   onEdited: function(v) { circuit.toField = v }
@@ -748,20 +748,20 @@ CircuitField {
                                 Text {
                                     text: "weight " + circuit.newWeight
                                     color: Qt.rgba(0.8, 0.75, 0.9, 1)
-                                    font.pixelSize: 8
+                                    font.pixelSize: 10
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
 
                                 Rectangle {
-                                    width: 48
-                                    height: 20
+                                    width: 54
+                                    height: 24
                                     radius: 6
                                     color: Qt.rgba(0.65, 0.55, 0.95, 0.25)
                                     Text {
                                         anchors.centerIn: parent
                                         text: "add"
                                         color: "white"
-                                        font.pixelSize: 9
+                                        font.pixelSize: 11
                                         font.bold: true
                                     }
                                     MouseArea {
@@ -776,7 +776,7 @@ CircuitField {
                                 wrapMode: Text.Wrap
                                 text: circuit.applyFeedback
                                 color: Qt.rgba(0.85, 0.8, 0.95, 1)
-                                font.pixelSize: 8
+                                font.pixelSize: 10
                             }
                         }
 
@@ -785,7 +785,7 @@ CircuitField {
                             wrapMode: Text.Wrap
                             text: circuit.honestyNote
                             color: Qt.rgba(0.55, 0.55, 0.6, 1)
-                            font.pixelSize: 8
+                            font.pixelSize: 10
                         }
                     }
 
@@ -797,7 +797,7 @@ CircuitField {
                         Text {
                             text: "observation (live)"
                             color: Qt.rgba(0.9, 0.85, 0.94, 1)
-                            font.pixelSize: 12
+                            font.pixelSize: 13
                             font.bold: true
                         }
 
@@ -808,14 +808,14 @@ CircuitField {
                             Column {
                                 width: (parent.width - 8) / 2
                                 spacing: 2
-                                Text { text: "motor L"; color: Qt.rgba(0.6, 0.7, 0.7, 1); font.pixelSize: 8 }
-                                Text { text: circuit.motorLText; color: "white"; font.pixelSize: 16; font.bold: true }
+                                Text { text: "motor L"; color: Qt.rgba(0.6, 0.7, 0.7, 1); font.pixelSize: 10 }
+                                Text { text: circuit.motorLText; color: "white"; font.pixelSize: 17; font.bold: true }
                             }
                             Column {
                                 width: (parent.width - 8) / 2
                                 spacing: 2
-                                Text { text: "motor R"; color: Qt.rgba(0.6, 0.7, 0.7, 1); font.pixelSize: 8 }
-                                Text { text: circuit.motorRText; color: "white"; font.pixelSize: 16; font.bold: true }
+                                Text { text: "motor R"; color: Qt.rgba(0.6, 0.7, 0.7, 1); font.pixelSize: 10 }
+                                Text { text: circuit.motorRText; color: "white"; font.pixelSize: 17; font.bold: true }
                             }
                         }
 
@@ -824,13 +824,13 @@ CircuitField {
                             wrapMode: Text.Wrap
                             text: circuit.liveContext
                             color: Qt.rgba(0.9, 0.85, 0.94, 1)
-                            font.pixelSize: 9
+                            font.pixelSize: 11
                         }
 
                         Text {
                             text: "fires in the last " + circuit.motorSamples + " cycles (command/inter)"
                             color: Qt.rgba(0.6, 0.6, 0.65, 1)
-                            font.pixelSize: 8
+                            font.pixelSize: 10
                         }
 
                         CellRow { title: "🕹 command"; count: circuit.firesObserved; cells: circuit.commandCells; src: circuit.monitor }
@@ -841,12 +841,12 @@ CircuitField {
                             wrapMode: Text.Wrap
                             text: "baseline = the wiring with NO patches. What you change moves the real connectome; the harness judges the rest."
                             color: Qt.rgba(0.55, 0.55, 0.6, 1)
-                            font.pixelSize: 8
+                            font.pixelSize: 10
                         }
 
                         Rectangle {
                             width: parent.width
-                            height: 20
+                            height: 24
                             radius: 8
                             color: Qt.rgba(1, 1, 1, 0.06)
                             Text {
@@ -854,7 +854,7 @@ CircuitField {
                                 text: "motor avg " + (circuit.motorSamples ? (circuit.motorTotal / circuit.motorSamples).toFixed(2) : "0")
                                     + " · peak " + circuit.motorPeak.toFixed(2)
                                 color: Qt.rgba(0.9, 0.85, 0.94, 1)
-                                font.pixelSize: 9
+                                font.pixelSize: 11
                             }
                         }
                     }
@@ -867,25 +867,25 @@ CircuitField {
                         Text {
                             text: "experiment journal"
                             color: Qt.rgba(0.9, 0.85, 0.94, 1)
-                            font.pixelSize: 12
+                            font.pixelSize: 13
                             font.bold: true
                         }
 
-                        // session controls
+                        /* session controls */
                         Row {
                             width: parent.width
                             spacing: 6
 
                             Rectangle {
                                 width: (parent.width - 6) * 0.45
-                                height: 26
+                                height: 28
                                 radius: 8
                                 color: circuit.running ? Qt.rgba(0.9, 0.45, 0.35, 0.3) : Qt.rgba(0.55, 0.45, 0.9, 0.25)
                                 Text {
                                     anchors.centerIn: parent
                                     text: circuit.running ? "■ end & restore" : "● start session"
                                     color: "white"
-                                    font.pixelSize: 9
+                                    font.pixelSize: 11
                                     font.bold: true
                                 }
                                 MouseArea {
@@ -896,7 +896,7 @@ CircuitField {
 
                             Rectangle {
                                 width: (parent.width - 6) * 0.55
-                                height: 26
+                                height: 28
                                 radius: 8
                                 color: Qt.rgba(0.35, 0.85, 0.6, 0.28)
                                 border.color: Qt.rgba(0.5, 1, 0.75, 0.45)
@@ -905,7 +905,7 @@ CircuitField {
                                     anchors.centerIn: parent
                                     text: "⚡ apply to pet"
                                     color: "white"
-                                    font.pixelSize: 9
+                                    font.pixelSize: 11
                                     font.bold: true
                                 }
                                 MouseArea {
@@ -921,17 +921,17 @@ CircuitField {
                             wrapMode: Text.Wrap
                             text: "apply to pet = the only write to pet.json; the patch set then survives sessions, reloads and restarts. Anything else is restored on close."
                             color: Qt.rgba(0.55, 0.55, 0.6, 1)
-                            font.pixelSize: 8
+                            font.pixelSize: 10
                         }
 
                         Text {
                             text: "hypothesis / question"
                             color: Qt.rgba(0.6, 0.6, 0.65, 1)
-                            font.pixelSize: 8
+                            font.pixelSize: 10
                         }
                         Rectangle {
                             width: parent.width
-                            height: 36
+                            height: 44
                             radius: 6
                             color: Qt.rgba(1, 1, 1, 0.05)
                             border.color: Qt.rgba(0.9, 0.75, 1, 0.15)
@@ -941,7 +941,7 @@ CircuitField {
                                 anchors.fill: parent
                                 anchors.margins: 6
                                 color: "white"
-                                font.pixelSize: 9
+                                font.pixelSize: 11
                                 wrapMode: TextEdit.Wrap
                                 selectByMouse: true
                                 text: circuit.hypothesis
@@ -953,11 +953,11 @@ CircuitField {
                         Text {
                             text: "observation"
                             color: Qt.rgba(0.6, 0.6, 0.65, 1)
-                            font.pixelSize: 8
+                            font.pixelSize: 10
                         }
                         Rectangle {
                             width: parent.width
-                            height: 36
+                            height: 44
                             radius: 6
                             color: Qt.rgba(1, 1, 1, 0.05)
                             border.color: Qt.rgba(0.9, 0.75, 1, 0.15)
@@ -967,7 +967,7 @@ CircuitField {
                                 anchors.fill: parent
                                 anchors.margins: 6
                                 color: "white"
-                                font.pixelSize: 9
+                                font.pixelSize: 11
                                 wrapMode: TextEdit.Wrap
                                 selectByMouse: true
                                 text: circuit.observation
@@ -978,14 +978,14 @@ CircuitField {
 
                         Rectangle {
                             width: parent.width
-                            height: 22
+                            height: 26
                             radius: 6
                             color: Qt.rgba(0.55, 0.45, 0.9, 0.25)
                             Text {
                                 anchors.centerIn: parent
                                 text: "💾 save experiment"
                                 color: "white"
-                                font.pixelSize: 9
+                                font.pixelSize: 11
                                 font.bold: true
                             }
                             MouseArea {
@@ -997,7 +997,7 @@ CircuitField {
                         Text {
                             text: journal.entries.length + " recorded · ↺ re-apply · 🗑 delete"
                             color: Qt.rgba(0.6, 0.6, 0.65, 1)
-                            font.pixelSize: 8
+                            font.pixelSize: 10
                         }
 
                         ListView {
@@ -1010,7 +1010,7 @@ CircuitField {
 
                             delegate: Rectangle {
                                 width: ListView.view.width
-                                height: 52
+                                height: 62
                                 radius: 8
                                 color: Qt.rgba(1, 1, 1, 0.05)
                                 border.color: Qt.rgba(0.9, 0.75, 1, 0.15)
@@ -1029,7 +1029,7 @@ CircuitField {
                                         elide: Text.ElideRight
                                         text: "#" + modelData.id + " · " + circuit.journalTitle(modelData)
                                         color: "white"
-                                        font.pixelSize: 9
+                                        font.pixelSize: 11
                                         font.bold: true
                                     }
                                     Text {
@@ -1037,7 +1037,7 @@ CircuitField {
                                         elide: Text.ElideRight
                                         text: circuit.journalSummary(modelData)
                                         color: Qt.rgba(0.8, 0.78, 0.85, 1)
-                                        font.pixelSize: 8
+                                        font.pixelSize: 10
                                     }
                                     Text {
                                         width: parent.width
@@ -1046,7 +1046,7 @@ CircuitField {
                                             + (modelData.results && modelData.results.stateContext
                                                 ? " · state: " + modelData.results.stateContext : "")
                                         color: Qt.rgba(0.6, 0.6, 0.65, 1)
-                                        font.pixelSize: 8
+                                        font.pixelSize: 10
                                     }
                                 }
 
@@ -1061,15 +1061,15 @@ CircuitField {
                                     spacing: 3
 
                                     Rectangle {
-                                        width: 30; height: 16; radius: 4
+                                        width: 34; height: 20; radius: 4
                                         color: Qt.rgba(0.55, 0.45, 0.9, 0.25)
-                                        Text { anchors.centerIn: parent; text: "↺"; color: "white"; font.pixelSize: 9 }
+                                        Text { anchors.centerIn: parent; text: "↺"; color: "white"; font.pixelSize: 11 }
                                         MouseArea { anchors.fill: parent; onClicked: circuit.applyConfig(modelData.config) }
                                     }
                                     Rectangle {
-                                        width: 30; height: 16; radius: 4
+                                        width: 34; height: 20; radius: 4
                                         color: Qt.rgba(0.9, 0.45, 0.35, 0.22)
-                                        Text { anchors.centerIn: parent; text: "🗑"; color: "white"; font.pixelSize: 9 }
+                                        Text { anchors.centerIn: parent; text: "🗑"; color: "white"; font.pixelSize: 11 }
                                         MouseArea {
                                             anchors.fill: parent
                                             onClicked: {

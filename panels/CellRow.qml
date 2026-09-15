@@ -10,7 +10,7 @@ Item {
     property int count: 0
     property var cells: []
     property var src: null
-    height: 17
+    height: 21
     width: parent ? parent.width : 200
 
     Row {
@@ -19,10 +19,10 @@ Item {
 
         Text {
             text: cr.title
-            width: 64
+            width: 76
             elide: Text.ElideRight
             color: Qt.rgba(0.82, 0.9, 0.88, 1)
-            font.pixelSize: 9
+            font.pixelSize: 10
             anchors.verticalCenter: parent.verticalCenter
         }
 
@@ -30,8 +30,8 @@ Item {
             model: cr.cells
             delegate: Rectangle {
                 property int ci: GraphData.graphNodes().indexOf(modelData)
-                width: 13
-                height: 13
+                width: 14
+                height: 14
                 radius: 3
                 anchors.verticalCenter: parent.verticalCenter
                 color: {
@@ -45,7 +45,7 @@ Item {
                     anchors.centerIn: parent
                     text: "!"
                     color: "white"
-                    font.pixelSize: 8
+                    font.pixelSize: 9
                     font.bold: true
                 }
             }
@@ -54,7 +54,7 @@ Item {
         Text {
             text: cr.count + " fires"
             color: Qt.rgba(0.55, 0.65, 0.65, 1)
-            font.pixelSize: 8
+            font.pixelSize: 9
             anchors.verticalCenter: parent.verticalCenter
         }
     }

@@ -323,20 +323,20 @@ Item {
                 // header
                 Row {
                     width: parent.width
-                    height: 26
+                    height: 30
                     spacing: 8
 
                     Text {
                         id: titleTxt
                         text: "🧪 " + (pet ? pet.petName : "?") + " · stimulus lab"
                         color: "white"
-                        font.pixelSize: 17
+                        font.pixelSize: 18
                         font.bold: true
                     }
 
                     Rectangle {
                         id: runChip
-                        height: 24
+                        height: 28
                         anchors.verticalCenter: parent.verticalCenter
                         implicitWidth: runText.implicitWidth + 14
                         radius: 9
@@ -349,7 +349,7 @@ Item {
                             anchors.centerIn: parent
                             text: lab.running ? "● observing" : "◦ idle"
                             color: "white"
-                            font.pixelSize: 12
+                            font.pixelSize: 13
                             font.bold: true
                         }
                     }
@@ -362,7 +362,7 @@ Item {
                         elide: Text.ElideRight
                         text: "bottom-up: inject stimulus, watch the wiring respond"
                         color: Qt.rgba(0.82, 0.9, 0.88, 1)
-                        font.pixelSize: 12
+                        font.pixelSize: 13
                     }
 
                     Text {
@@ -370,7 +370,7 @@ Item {
                         text: "🧠 mind"
                         anchors.verticalCenter: parent.verticalCenter
                         color: Qt.rgba(0.7, 1, 0.95, 1)
-                        font.pixelSize: 10
+                        font.pixelSize: 12
                         MouseArea {
                             anchors.fill: parent
                             onClicked: lab.toMind()
@@ -382,7 +382,7 @@ Item {
                         text: "✕"
                         anchors.verticalCenter: parent.verticalCenter
                         color: Qt.rgba(0.82, 0.9, 0.88, 1)
-                        font.pixelSize: 16
+                        font.pixelSize: 17
                         MouseArea {
                             anchors.fill: parent
                             onClicked: lab.close()
@@ -402,14 +402,14 @@ Item {
                         Text {
                             text: "stimuli"
                             color: Qt.rgba(0.82, 0.9, 0.88, 1)
-                            font.pixelSize: 12
+                            font.pixelSize: 13
                             font.bold: true
                         }
 
                         // -- thermo card -------------------------------------
                         Rectangle {
                             width: parent.width
-                            height: lab.thermoOpen ? 128 : 32
+                            height: lab.thermoOpen ? 144 : 36
                             radius: 10
                             color: Qt.rgba(1, 1, 1, 0.05)
                             border.color: Qt.rgba(0.45, 1, 0.9, 0.18)
@@ -427,7 +427,7 @@ Item {
                                     Text {
                                         text: lab.thermoOpen ? "▾" : "▸"
                                         color: Qt.rgba(0.6, 0.7, 0.7, 1)
-                                        font.pixelSize: 9
+                                        font.pixelSize: 11
                                         anchors.verticalCenter: parent.verticalCenter
                                         MouseArea {
                                             anchors.fill: parent
@@ -438,7 +438,7 @@ Item {
                                     Text {
                                         text: "🔥 thermo AFD"
                                         color: "white"
-                                        font.pixelSize: 10
+                                        font.pixelSize: 12
                                         font.bold: true
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
@@ -446,7 +446,7 @@ Item {
                                     Text {
                                         text: "synthetic"
                                         color: Qt.rgba(0.9, 0.72, 0.3, 1)
-                                        font.pixelSize: 8
+                                        font.pixelSize: 10
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
 
@@ -455,7 +455,7 @@ Item {
                                     Text {
                                         text: lab.thermoOn ? "on" : "off"
                                         color: lab.thermoOn ? "#4dff88" : Qt.rgba(0.6, 0.7, 0.7, 1)
-                                        font.pixelSize: 9
+                                        font.pixelSize: 11
                                         font.bold: true
                                         anchors.verticalCenter: parent.verticalCenter
                                         MouseArea {
@@ -471,7 +471,7 @@ Item {
                                     wrapMode: Text.Wrap
                                     text: "AFDL/AFDR — real thermo cells; mapping synthetic (charge ∝ ΔT on probes)"
                                     color: Qt.rgba(0.65, 0.78, 0.75, 1)
-                                    font.pixelSize: 8
+                                    font.pixelSize: 10
                                 }
 
                                 Row {
@@ -489,8 +489,8 @@ Item {
                                     }
 
                                     Rectangle {
-                                        width: 88
-                                        height: 16
+                                        width: 96
+                                        height: 20
                                         radius: 8
                                         color: world.labPlaceMode === "thermo"
                                             ? Qt.rgba(0.9, 0.6, 0.3, 0.4) : Qt.rgba(1, 1, 1, 0.08)
@@ -498,7 +498,7 @@ Item {
                                             anchors.centerIn: parent
                                             text: world.labPlaceMode === "thermo" ? "placing…" : "place source"
                                             color: "white"
-                                            font.pixelSize: 8
+                                            font.pixelSize: 10
                                         }
                                         MouseArea {
                                             anchors.fill: parent
@@ -512,12 +512,12 @@ Item {
                                     text: (world.thermoSources.length || 0) + " placing · "
                                         + (world.thermoSources.length === 1 ? "1" : world.thermoSources.length) + " in arena · clear"
                                     color: Qt.rgba(0.6, 0.7, 0.7, 1)
-                                    font.pixelSize: 8
+                                    font.pixelSize: 10
                                     Text {
                                         text: "clear"
                                         anchors.right: parent.right
                                         color: Qt.rgba(0.9, 0.6, 0.6, 1)
-                                        font.pixelSize: 8
+                                        font.pixelSize: 10
                                         MouseArea { anchors.fill: parent; onClicked: { world.clearThermo(); world.refresh() } }
                                     }
                                 }
@@ -527,7 +527,7 @@ Item {
                         // -- chemB card --------------------------------------
                         Rectangle {
                             width: parent.width
-                            height: lab.chemBOpen ? 128 : 32
+                            height: lab.chemBOpen ? 144 : 36
                             radius: 10
                             color: Qt.rgba(1, 1, 1, 0.05)
                             border.color: Qt.rgba(0.45, 1, 0.9, 0.18)
@@ -545,7 +545,7 @@ Item {
                                     Text {
                                         text: lab.chemBOpen ? "▾" : "▸"
                                         color: Qt.rgba(0.6, 0.7, 0.7, 1)
-                                        font.pixelSize: 9
+                                        font.pixelSize: 11
                                         anchors.verticalCenter: parent.verticalCenter
                                         MouseArea {
                                             anchors.fill: parent
@@ -556,7 +556,7 @@ Item {
                                     Text {
                                         text: "🧪 chem-B AWA"
                                         color: "white"
-                                        font.pixelSize: 10
+                                        font.pixelSize: 12
                                         font.bold: true
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
@@ -564,7 +564,7 @@ Item {
                                     Text {
                                         text: "synthetic"
                                         color: Qt.rgba(0.9, 0.72, 0.3, 1)
-                                        font.pixelSize: 8
+                                        font.pixelSize: 10
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
 
@@ -573,7 +573,7 @@ Item {
                                     Text {
                                         text: lab.chemBOn ? "on" : "off"
                                         color: lab.chemBOn ? "#4dff88" : Qt.rgba(0.6, 0.7, 0.7, 1)
-                                        font.pixelSize: 9
+                                        font.pixelSize: 11
                                         font.bold: true
                                         anchors.verticalCenter: parent.verticalCenter
                                         MouseArea {
@@ -589,7 +589,7 @@ Item {
                                     wrapMode: Text.Wrap
                                     text: "AWAL/AWAR — real chemosensory A; mapping synthetic (charge ∝ gradient)"
                                     color: Qt.rgba(0.65, 0.78, 0.75, 1)
-                                    font.pixelSize: 8
+                                    font.pixelSize: 10
                                 }
 
                                 Row {
@@ -607,8 +607,8 @@ Item {
                                     }
 
                                     Rectangle {
-                                        width: 88
-                                        height: 16
+                                        width: 96
+                                        height: 20
                                         radius: 8
                                         color: world.labPlaceMode === "chemB"
                                             ? Qt.rgba(0.35, 0.9, 0.7, 0.4) : Qt.rgba(1, 1, 1, 0.08)
@@ -616,7 +616,7 @@ Item {
                                             anchors.centerIn: parent
                                             text: world.labPlaceMode === "chemB" ? "placing…" : "place source"
                                             color: "white"
-                                            font.pixelSize: 8
+                                            font.pixelSize: 10
                                         }
                                         MouseArea {
                                             anchors.fill: parent
@@ -630,12 +630,12 @@ Item {
                                     text: (world.chemBSources.length || 0) + " placing · "
                                         + (world.chemBSources.length === 1 ? "1" : world.chemBSources.length) + " in arena · clear"
                                     color: Qt.rgba(0.6, 0.7, 0.7, 1)
-                                    font.pixelSize: 8
+                                    font.pixelSize: 10
                                     Text {
                                         text: "clear"
                                         anchors.right: parent.right
                                         color: Qt.rgba(0.9, 0.6, 0.6, 1)
-                                        font.pixelSize: 8
+                                        font.pixelSize: 10
                                         MouseArea { anchors.fill: parent; onClicked: { world.clearChemB(); world.refresh() } }
                                     }
                                 }
@@ -645,7 +645,7 @@ Item {
                         // -- tail card ----------------------------------------
                         Rectangle {
                             width: parent.width
-                            height: lab.tailOpen ? 150 : 32
+                            height: lab.tailOpen ? 168 : 36
                             radius: 10
                             color: Qt.rgba(1, 1, 1, 0.05)
                             border.color: Qt.rgba(0.45, 1, 0.9, 0.18)
@@ -663,7 +663,7 @@ Item {
                                     Text {
                                         text: lab.tailOpen ? "▾" : "▸"
                                         color: Qt.rgba(0.6, 0.7, 0.7, 1)
-                                        font.pixelSize: 9
+                                        font.pixelSize: 11
                                         anchors.verticalCenter: parent.verticalCenter
                                         MouseArea {
                                             anchors.fill: parent
@@ -674,7 +674,7 @@ Item {
                                     Text {
                                         text: "🔔 tail-touch PLM"
                                         color: "white"
-                                        font.pixelSize: 10
+                                        font.pixelSize: 12
                                         font.bold: true
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
@@ -682,7 +682,7 @@ Item {
                                     Text {
                                         text: "real reflex"
                                         color: Qt.rgba(0.5, 0.85, 0.6, 1)
-                                        font.pixelSize: 8
+                                        font.pixelSize: 10
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
 
@@ -691,7 +691,7 @@ Item {
                                     Text {
                                         text: "poke"
                                         color: Qt.rgba(0.7, 1, 0.95, 1)
-                                        font.pixelSize: 9
+                                        font.pixelSize: 11
                                         font.bold: true
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
@@ -703,7 +703,7 @@ Item {
                                     wrapMode: Text.Wrap
                                     text: "PLML/PLMR — real tail mechanosensory; the reflex emerges from wiring (PLM→AVA/AS→body muscles)"
                                     color: Qt.rgba(0.65, 0.78, 0.75, 1)
-                                    font.pixelSize: 8
+                                    font.pixelSize: 10
                                 }
 
                                 Row {
@@ -714,26 +714,26 @@ Item {
                                     Text {
                                         text: "side:"
                                         color: Qt.rgba(0.6, 0.7, 0.7, 1)
-                                        font.pixelSize: 9
+                                        font.pixelSize: 11
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
 
                                     Rectangle {
-                                        width: 46; height: 20; radius: 6
+                                        width: 56; height: 24; radius: 6
                                         color: Qt.rgba(1, 1, 1, 0.08)
-                                        Text { anchors.centerIn: parent; text: "↰ left"; color: "white"; font.pixelSize: 9 }
+                                        Text { anchors.centerIn: parent; text: "↰ left"; color: "white"; font.pixelSize: 11 }
                                         MouseArea { anchors.fill: parent; onClicked: lab.pokeTail("left") }
                                     }
                                     Rectangle {
-                                        width: 46; height: 20; radius: 6
+                                        width: 56; height: 24; radius: 6
                                         color: Qt.rgba(1, 1, 1, 0.08)
-                                        Text { anchors.centerIn: parent; text: "↱ right"; color: "white"; font.pixelSize: 9 }
+                                        Text { anchors.centerIn: parent; text: "↱ right"; color: "white"; font.pixelSize: 11 }
                                         MouseArea { anchors.fill: parent; onClicked: lab.pokeTail("right") }
                                     }
                                     Rectangle {
-                                        width: 46; height: 20; radius: 6
+                                        width: 56; height: 24; radius: 6
                                         color: Qt.rgba(1, 1, 1, 0.08)
-                                        Text { anchors.centerIn: parent; text: "↕ both"; color: "white"; font.pixelSize: 9 }
+                                        Text { anchors.centerIn: parent; text: "↕ both"; color: "white"; font.pixelSize: 11 }
                                         MouseArea { anchors.fill: parent; onClicked: lab.pokeTail("none") }
                                     }
                                 }
@@ -742,7 +742,7 @@ Item {
                                     visible: lab.tailOpen
                                     text: "poke = one short charge burst (~0.4 s) on PLML/PLMR"
                                     color: Qt.rgba(0.6, 0.7, 0.7, 1)
-                                    font.pixelSize: 8
+                                    font.pixelSize: 10
                                 }
                             }
                         }
@@ -752,16 +752,16 @@ Item {
                             width: parent.width
                             spacing: 6
 
-                            Rectangle {
-                                width: (parent.width - 6) / 2
-                                height: 24
-                                radius: 8
-                                color: lab.running ? Qt.rgba(0.9, 0.45, 0.35, 0.35) : Qt.rgba(0.35, 0.9, 0.55, 0.25)
+Rectangle {
+                            width: parent.width
+                            height: 26
+                            radius: 8
+                            color: lab.running ? Qt.rgba(0.9, 0.45, 0.35, 0.35) : Qt.rgba(0.35, 0.9, 0.55, 0.25)
                                 Text {
                                     anchors.centerIn: parent
                                     text: lab.running ? "■ end & restore" : "● restart"
                                     color: "white"
-                                    font.pixelSize: 9
+                                    font.pixelSize: 11
                                     font.bold: true
                                 }
                                 MouseArea {
@@ -772,14 +772,14 @@ Item {
 
                             Rectangle {
                                 width: (parent.width - 6) / 2
-                                height: 24
+                                height: 26
                                 radius: 8
                                 color: Qt.rgba(1, 1, 1, 0.08)
                                 Text {
                                     anchors.centerIn: parent
                                     text: "✳ clear sources"
                                     color: Qt.rgba(0.82, 0.9, 0.88, 1)
-                                    font.pixelSize: 9
+                                    font.pixelSize: 11
                                     font.bold: true
                                 }
                                 MouseArea {
@@ -792,7 +792,7 @@ Item {
                         // -- channel amplify toggle -----------------------
                         Rectangle {
                             width: parent.width
-                            height: 24
+                            height: 26
                             radius: 8
                             color: lab.boost ? Qt.rgba(0.85, 0.65, 0.2, 0.35)
                                   : Qt.rgba(1, 1, 1, 0.08)
@@ -805,14 +805,14 @@ Item {
                                 Text {
                                     text: "⚡ ×3 amplify"
                                     color: "white"
-                                    font.pixelSize: 9
+                                    font.pixelSize: 11
                                     font.bold: true
                                 }
                                 Text {
                                     text: lab.boost ? "on" : "off"
                                     color: lab.boost ? "#ffbf5e"
                                           : Qt.rgba(0.6, 0.7, 0.7, 1)
-                                    font.pixelSize: 8
+                                    font.pixelSize: 10
                                 }
                             }
                             MouseArea {
@@ -826,7 +826,7 @@ Item {
                             wrapMode: Text.Wrap
                             text: "when nothing happens at max slider, ⚡ ×3 is where the harness measured a real taxis response"
                             color: Qt.rgba(0.55, 0.62, 0.6, 1)
-                            font.pixelSize: 8
+                            font.pixelSize: 10
                         }
 
                         Text {
@@ -834,7 +834,7 @@ Item {
                             wrapMode: Text.Wrap
                             text: lab.honestyNote
                             color: Qt.rgba(0.5, 0.62, 0.6, 1)
-                            font.pixelSize: 8
+                            font.pixelSize: 10
                         }
                     }
 
@@ -846,7 +846,7 @@ Item {
                         Text {
                             text: "observation (live)"
                             color: Qt.rgba(0.82, 0.9, 0.88, 1)
-                            font.pixelSize: 12
+                            font.pixelSize: 13
                             font.bold: true
                         }
 
@@ -857,14 +857,14 @@ Item {
                             Column {
                                 width: (parent.width - 8) / 2
                                 spacing: 2
-                                Text { text: "motor L"; color: Qt.rgba(0.6, 0.7, 0.7, 1); font.pixelSize: 8 }
-                                Text { text: lab.motorLText; color: "white"; font.pixelSize: 16; font.bold: true }
+                                Text { text: "motor L"; color: Qt.rgba(0.6, 0.7, 0.7, 1); font.pixelSize: 10 }
+                                Text { text: lab.motorLText; color: "white"; font.pixelSize: 17; font.bold: true }
                             }
                             Column {
                                 width: (parent.width - 8) / 2
                                 spacing: 2
-                                Text { text: "motor R"; color: Qt.rgba(0.6, 0.7, 0.7, 1); font.pixelSize: 8 }
-                                Text { text: lab.motorRText; color: "white"; font.pixelSize: 16; font.bold: true }
+                                Text { text: "motor R"; color: Qt.rgba(0.6, 0.7, 0.7, 1); font.pixelSize: 10 }
+                                Text { text: lab.motorRText; color: "white"; font.pixelSize: 17; font.bold: true }
                             }
                         }
 
@@ -873,13 +873,13 @@ Item {
                             wrapMode: Text.Wrap
                             text: lab.liveContext
                             color: Qt.rgba(0.82, 0.9, 0.88, 1)
-                            font.pixelSize: 9
+                            font.pixelSize: 11
                         }
 
                         Text {
                             text: "fires in the last " + lab.motorSamples + " cycles (real cells)"
                             color: Qt.rgba(0.5, 0.62, 0.6, 1)
-                            font.pixelSize: 8
+                            font.pixelSize: 10
                         }
 
                         CellRow { title: "🔥 thermo"; count: lab.thermoFires; cells: lab.thermoCells; src: lab.monitor }
@@ -895,12 +895,12 @@ Item {
                             Text {
                                 text: "🔥 probe " + lab.thProbe.toFixed(2) + " → charge " + lab.thCharge.toFixed(1)
                                 color: Qt.rgba(0.82, 0.9, 0.88, 1)
-                                font.pixelSize: 8
+                                font.pixelSize: 10
                             }
                             Text {
                                 text: "🧪 probe " + lab.cbProbe.toFixed(2) + " → charge " + lab.cbCharge.toFixed(1)
                                 color: Qt.rgba(0.82, 0.9, 0.88, 1)
-                                font.pixelSize: 8
+                                font.pixelSize: 10
                             }
                             Text {
                                 width: 230
@@ -913,13 +913,13 @@ Item {
                                     : ""
                                 visible: text !== ""
                                 color: Qt.rgba(0.6, 0.72, 0.7, 1)
-                                font.pixelSize: 8
+                                font.pixelSize: 10
                             }
                         }
 
                         Rectangle {
                             width: parent.width
-                            height: 20
+                            height: 24
                             radius: 8
                             color: Qt.rgba(1, 1, 1, 0.06)
                             Text {
@@ -927,7 +927,7 @@ Item {
                                 text: "motor avg " + (lab.motorSamples ? (lab.motorTotal / lab.motorSamples).toFixed(2) : "0")
                                     + " · peak " + lab.motorPeak.toFixed(2)
                                 color: Qt.rgba(0.82, 0.9, 0.88, 1)
-                                font.pixelSize: 9
+                                font.pixelSize: 11
                             }
                         }
                     }
@@ -940,18 +940,18 @@ Item {
                         Text {
                             text: "experiment journal"
                             color: Qt.rgba(0.82, 0.9, 0.88, 1)
-                            font.pixelSize: 12
+                            font.pixelSize: 13
                             font.bold: true
                         }
 
                         Text {
                             text: "hypothesis / question"
                             color: Qt.rgba(0.5, 0.62, 0.6, 1)
-                            font.pixelSize: 8
+                            font.pixelSize: 10
                         }
                         Rectangle {
                             width: parent.width
-                            height: 36
+                            height: 44
                             radius: 6
                             color: Qt.rgba(1, 1, 1, 0.05)
                             border.color: Qt.rgba(0.45, 1, 0.9, 0.15)
@@ -961,7 +961,7 @@ Item {
                                 anchors.fill: parent
                                 anchors.margins: 6
                                 color: "white"
-                                font.pixelSize: 9
+                                font.pixelSize: 11
                                 wrapMode: TextEdit.Wrap
                                 selectByMouse: true
                                 text: lab.hypothesis
@@ -973,11 +973,11 @@ Item {
                         Text {
                             text: "observation"
                             color: Qt.rgba(0.5, 0.62, 0.6, 1)
-                            font.pixelSize: 8
+                            font.pixelSize: 10
                         }
                         Rectangle {
                             width: parent.width
-                            height: 36
+                            height: 44
                             radius: 6
                             color: Qt.rgba(1, 1, 1, 0.05)
                             border.color: Qt.rgba(0.45, 1, 0.9, 0.15)
@@ -987,7 +987,7 @@ Item {
                                 anchors.fill: parent
                                 anchors.margins: 6
                                 color: "white"
-                                font.pixelSize: 9
+                                font.pixelSize: 11
                                 wrapMode: TextEdit.Wrap
                                 selectByMouse: true
                                 text: lab.observation
@@ -998,14 +998,14 @@ Item {
 
                         Rectangle {
                             width: parent.width
-                            height: 22
+                            height: 26
                             radius: 6
                             color: Qt.rgba(0.35, 0.9, 0.55, 0.25)
                             Text {
                                 anchors.centerIn: parent
                                 text: "💾 save experiment"
                                 color: "white"
-                                font.pixelSize: 9
+                                font.pixelSize: 11
                                 font.bold: true
                             }
                             MouseArea {
@@ -1017,7 +1017,7 @@ Item {
                         Text {
                             text: journal.entries.length + " recorded · ↺ re-apply · 🗑 delete"
                             color: Qt.rgba(0.5, 0.62, 0.6, 1)
-                            font.pixelSize: 8
+                            font.pixelSize: 10
                         }
 
                         ListView {
@@ -1030,7 +1030,7 @@ Item {
 
                             delegate: Rectangle {
                                 width: ListView.view.width
-                                height: 52
+                                height: 62
                                 radius: 8
                                 color: Qt.rgba(1, 1, 1, 0.05)
                                 border.color: Qt.rgba(0.45, 1, 0.9, 0.15)
@@ -1049,7 +1049,7 @@ Item {
                                         elide: Text.ElideRight
                                         text: "#" + modelData.id + " · " + lab.journalTitle(modelData)
                                         color: "white"
-                                        font.pixelSize: 9
+                                        font.pixelSize: 11
                                         font.bold: true
                                     }
                                     Text {
@@ -1057,7 +1057,7 @@ Item {
                                         elide: Text.ElideRight
                                         text: lab.journalSummary(modelData)
                                         color: Qt.rgba(0.65, 0.78, 0.75, 1)
-                                        font.pixelSize: 8
+                                        font.pixelSize: 10
                                     }
                                     Text {
                                         width: parent.width
@@ -1066,7 +1066,7 @@ Item {
                                             + (modelData.results && modelData.results.stateContext
                                                 ? " · state: " + modelData.results.stateContext : "")
                                         color: Qt.rgba(0.5, 0.62, 0.6, 1)
-                                        font.pixelSize: 8
+                                        font.pixelSize: 10
                                     }
                                 }
 
@@ -1081,15 +1081,15 @@ Item {
                                     spacing: 3
 
                                     Rectangle {
-                                        width: 30; height: 16; radius: 4
+                                        width: 34; height: 20; radius: 4
                                         color: Qt.rgba(0.45, 1, 0.9, 0.18)
-                                        Text { anchors.centerIn: parent; text: "↺"; color: "white"; font.pixelSize: 9 }
+                                        Text { anchors.centerIn: parent; text: "↺"; color: "white"; font.pixelSize: 11 }
                                         MouseArea { anchors.fill: parent; onClicked: lab.applyConfig(modelData.config) }
                                     }
                                     Rectangle {
-                                        width: 30; height: 16; radius: 4
+                                        width: 34; height: 20; radius: 4
                                         color: Qt.rgba(0.9, 0.45, 0.35, 0.22)
-                                        Text { anchors.centerIn: parent; text: "🗑"; color: "white"; font.pixelSize: 9 }
+                                        Text { anchors.centerIn: parent; text: "🗑"; color: "white"; font.pixelSize: 11 }
                                         MouseArea {
                                             anchors.fill: parent
                                             onClicked: {

@@ -63,12 +63,15 @@ Panel {
     var name = renameField.text
     var applied = petState ? petState.setName(name) : ""
     if (applied && applied !== String(root.petNameSetting)) root.syncNameToSetting(applied)
+    // A new name reshuffles the tank decor (first-ever naming does too).
+    if (applied && world) world.regenerateObstacles()
     root.renameActive = false
   }
 
   function commitOnboarding() {
     var applied = petState.setName(onboardField.text)
     if (applied) root.syncNameToSetting(applied)
+    if (world) world.regenerateObstacles()
   }
 
   function switchPanel(direction) {
@@ -134,10 +137,15 @@ Panel {
       onCloseRequested: root.close()
       onTabRequested: function(direction) { root.switchPanel(direction) }
 
-      Rectangle {
-        id: aquarium
+      Column {
         anchors.fill: parent
-        color: Qt.rgba(root.barForeground.r, root.barForeground.g, root.barForeground.b, 0.12)
+        spacing: 0
+
+        Rectangle {
+          id: aquarium
+          width: parent.width
+          height: parent.height - hudBar.height
+          color: Qt.rgba(root.barForeground.r, root.barForeground.g, root.barForeground.b, 0.12)
 
         // World first so the pet renders on top (and wins the click when the
         // cursor is over it; anywhere else drops food).
@@ -160,133 +168,6 @@ Panel {
           brainController: brainController
           world: world
           petState: petState
-        }
-
-        // Tiny HUD: name (+ inline rename), state chip, energy bar
-        Column {
-          anchors.horizontalCenter: parent.horizontalCenter
-          anchors.bottom: parent.bottom
-          anchors.bottomMargin: 6
-          spacing: 4
-
-          Row {
-            anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 4
-
-            Text {
-              id: nameText
-              visible: !root.renameActive
-              height: 16
-              verticalAlignment: Text.AlignVCenter
-              text: petState.petName
-              color: Qt.rgba(0.7, 1, 0.95, 1)
-              font.pixelSize: 10
-              font.bold: true
-            }
-
-            TextInput {
-              id: renameField
-              visible: root.renameActive
-              width: 90
-              height: 16
-              verticalAlignment: TextInput.AlignVCenter
-              text: petState.petName
-              color: Qt.rgba(0.7, 1, 0.95, 1)
-              font.pixelSize: 10
-              font.bold: true
-              selectByMouse: true
-              onAccepted: root.commitRename()
-              onActiveFocusChanged: if (!activeFocus && root.renameActive) root.renameActive = false
-              Keys.onEscapePressed: root.renameActive = false
-            }
-
-            Text {
-              id: pencil
-              visible: !root.renameActive
-              height: 16
-              verticalAlignment: Text.AlignVCenter
-              text: "✏️"
-              font.pixelSize: 9
-              MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                  root.renameActive = true
-                  renameField.forceActiveFocus()
-                  Qt.callLater(function() { renameField.selectAll() })
-                }
-              }
-            }
-
-            // Applied circuit patches (pet.json). Always visible so it is
-            // obvious when the pet's wiring is altered and survives sessions.
-            Text {
-              visible: (petState.circuit || []).length > 0
-              height: 16
-              verticalAlignment: Text.AlignVCenter
-              text: "🧬 " + (petState.circuit || []).length + (petState.circuit.length === 1 ? " patch" : " patches")
-              color: Qt.rgba(0.85, 0.75, 1, 1)
-              font.pixelSize: 8
-              font.bold: true
-            }
-
-            // Mind overlay toggle: reads "what is it doing / why" — read-only.
-            Text {
-              id: mindBtn
-              visible: !root.renameActive
-              height: 16
-              verticalAlignment: Text.AlignVCenter
-              text: "🧠"
-              opacity: root.mindOpen ? 1.0 : 0.55
-              font.pixelSize: 9
-              MouseArea {
-                anchors.fill: parent
-                onClicked: root.mindOpen = !root.mindOpen
-              }
-            }
-          }
-
-          // Fixed status chip (always available); bubbles cover one-off events.
-          Rectangle {
-            anchors.horizontalCenter: parent.horizontalCenter
-            implicitWidth: chipText.width + 12
-            implicitHeight: chipText.height + 4
-            radius: Math.min(11, implicitHeight / 2)
-            color: {
-              var l = pet.stateLabel
-              if (l === "sleeping") return Qt.rgba(0.28, 0.4, 0.75, 0.55)
-              if (l === "grumpy")  return Qt.rgba(0.75, 0.35, 0.3, 0.6)
-              if (l === "hunting") return Qt.rgba(0.85, 0.65, 0.25, 0.6)
-              if (l === "hungry")  return Qt.rgba(0.85, 0.55, 0.2, 0.6)
-              if (l === "full")    return Qt.rgba(0.3, 0.75, 0.45, 0.55)
-              if (l === "resting") return Qt.rgba(0.4, 0.55, 0.5, 0.5)
-              return Qt.rgba(0.25, 0.6, 0.62, 0.55)
-            }
-
-            Text {
-              id: chipText
-              anchors.centerIn: parent
-              text: pet.stateLabelText
-              color: "white"
-              font.pixelSize: 9
-              font.bold: true
-            }
-          }
-
-          Rectangle {
-            width: 80
-            height: 5
-            radius: 2.5
-            color: Qt.rgba(1, 1, 1, 0.12)
-
-            Rectangle {
-              width: parent.width * Math.max(0, Math.min(1, petState.energy / 100))
-              height: parent.height
-              radius: 2.5
-              color: petState.energy > 50 ? "#4dff88"
-                    : petState.energy > 20 ? "#ffbf5e"
-                    : "#ff4d5e"
-            }
-          }
         }
 
         // First-run naming. Only shows while the pet has never been named and
@@ -321,7 +202,7 @@ Panel {
                 wrapMode: Text.Wrap
                 text: "It's a real tiny nervous system. What would you call it?"
                 color: Qt.rgba(0.82, 0.9, 0.88, 1)
-                font.pixelSize: 10
+                font.pixelSize: 12
               }
 
               TextInput {
@@ -346,7 +227,7 @@ Panel {
                   anchors.centerIn: parent
                   text: "Continue"
                   color: "#0a0f0d"
-                  font.pixelSize: 10
+                  font.pixelSize: 12
                   font.bold: true
                 }
 
@@ -366,8 +247,8 @@ Panel {
           id: mindOverlay
           visible: root.mindOpen && !root.needsOnboarding && !root.expertOpen && !root.labOpen && !root.circuitOpen
           z: 100
-          width: Math.min(parent.width - 40, 420)
-          height: Math.min(parent.height - 70, 380)
+          width: Math.min(parent.width - 40, 520)
+          height: Math.min(parent.height - 70, 500)
           anchors.centerIn: parent
           anchors.verticalCenterOffset: -6
           radius: 12
@@ -388,7 +269,7 @@ Panel {
                 id: mindTitle
                 text: "🧠 " + petState.petName + "'s mind"
                 color: "white"
-                font.pixelSize: 13
+                font.pixelSize: 15
                 font.bold: true
               }
 
@@ -402,7 +283,7 @@ Panel {
               Rectangle {
                 id: circuitBtn
                 implicitWidth: circuitBtnText.implicitWidth + 14
-                implicitHeight: 18
+                implicitHeight: 22
                 anchors.verticalCenter: parent.verticalCenter
                 radius: 9
                 color: Qt.rgba(0.62, 0.5, 0.95, 0.28)
@@ -414,7 +295,7 @@ Panel {
                   anchors.centerIn: parent
                   text: "🧬 circuit"
                   color: "white"
-                  font.pixelSize: 9
+                  font.pixelSize: 11
                   font.bold: true
                 }
 
@@ -432,7 +313,7 @@ Panel {
               Rectangle {
                 id: labBtn
                 implicitWidth: labBtnText.implicitWidth + 14
-                implicitHeight: 18
+                implicitHeight: 22
                 anchors.verticalCenter: parent.verticalCenter
                 radius: 9
                 color: Qt.rgba(0.35, 0.85, 0.7, 0.25)
@@ -444,7 +325,7 @@ Panel {
                   anchors.centerIn: parent
                   text: "🧪 lab"
                   color: "white"
-                  font.pixelSize: 9
+                  font.pixelSize: 11
                   font.bold: true
                 }
 
@@ -461,7 +342,7 @@ Panel {
               Rectangle {
                 id: expertBtn
                 implicitWidth: expertBtnText.implicitWidth + 14
-                implicitHeight: 18
+                implicitHeight: 22
                 anchors.verticalCenter: parent.verticalCenter
                 radius: 9
                 color: Qt.rgba(0.35, 0.72, 0.88, 0.25)
@@ -473,7 +354,7 @@ Panel {
                   anchors.centerIn: parent
                   text: "🔬 expert"
                   color: "white"
-                  font.pixelSize: 9
+                  font.pixelSize: 11
                   font.bold: true
                 }
 
@@ -491,7 +372,7 @@ Panel {
                 id: closeMindBtn
                 text: "✕"
                 color: Qt.rgba(0.82, 0.9, 0.88, 1)
-                font.pixelSize: 12
+                font.pixelSize: 13
                 MouseArea {
                   anchors.fill: parent
                   onClicked: root.mindOpen = false
@@ -504,7 +385,7 @@ Panel {
             Text {
               text: pet.stateLabelText
               color: "white"
-              font.pixelSize: 15
+              font.pixelSize: 16
               font.bold: true
             }
 
@@ -513,13 +394,13 @@ Panel {
               wrapMode: Text.Wrap
               text: pet.mindSummary()
               color: Qt.rgba(0.82, 0.9, 0.88, 1)
-              font.pixelSize: 10
+              font.pixelSize: 12
             }
 
             Text {
               text: "Why:"
               color: Qt.rgba(0.45, 1, 0.9, 1)
-              font.pixelSize: 9
+              font.pixelSize: 11
               font.bold: true
             }
 
@@ -530,8 +411,8 @@ Panel {
               Repeater {
                 model: pet.mindDrivers
                 delegate: Rectangle {
-                  implicitHeight: 16
-                  implicitWidth: driverText.width + 10
+                  implicitHeight: 20
+                  implicitWidth: driverText.width + 12
                   radius: 8
                   color: Qt.rgba(1, 1, 1, 0.08)
 
@@ -540,7 +421,7 @@ Panel {
                     anchors.centerIn: parent
                     text: modelData.icon + " " + modelData.text
                     color: "white"
-                    font.pixelSize: 9
+                    font.pixelSize: 11
                   }
                 }
               }
@@ -549,34 +430,34 @@ Panel {
             Text {
               text: "Recent:"
               color: Qt.rgba(0.45, 1, 0.9, 1)
-              font.pixelSize: 9
+              font.pixelSize: 11
               font.bold: true
             }
 
             ListView {
               width: parent.width
-              height: 150
+              height: 210
               clip: true
               spacing: 2
               model: pet.eventLog.slice(0, 8)
 
               delegate: Item {
                 width: ListView.view.width
-                height: 16
+                height: 20
 
                 Text {
                   text: modelData.text
-                  width: parent.width - 52
+                  width: parent.width - 60
                   elide: Text.ElideRight
                   color: "white"
-                  font.pixelSize: 9
+                  font.pixelSize: 11
                 }
 
                 Text {
                   text: root.relativeTime(modelData.time)
                   anchors.right: parent.right
                   color: Qt.rgba(0.6, 0.7, 0.7, 1)
-                  font.pixelSize: 8
+                  font.pixelSize: 11
                 }
               }
 
@@ -585,7 +466,7 @@ Panel {
                 anchors.centerIn: parent
                 color: Qt.rgba(0.6, 0.7, 0.7, 1)
                 text: "Nothing yet — give the pet a moment."
-                font.pixelSize: 9
+                font.pixelSize: 11
               }
             }
           }
@@ -639,6 +520,191 @@ Panel {
           journal: journal
           onClosed: root.circuitOpen = false
           onToMind: { root.circuitOpen = false; root.mindOpen = true }
+        }
+      }
+
+        // HUD strip below the tank — outside the aquarium, so clicks here can
+        // never fall through and drop food in the tank:
+        //   left  : name ·  emoji+state chip
+        //          : energy bar
+        //   right : edit-name and mind-view buttons (big, hard to misclick).
+        Rectangle {
+          id: hudBar
+          width: parent.width
+          height: 62
+          color: Qt.rgba(root.barForeground.r, root.barForeground.g, root.barForeground.b, 0.09)
+
+          Rectangle {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: 1
+            color: Qt.rgba(0.45, 1, 0.9, 0.25)
+          }
+
+          Column {
+            anchors.left: parent.left
+            anchors.leftMargin: 16
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 7
+
+            Row {
+              spacing: 10
+
+              Text {
+                id: nameText
+                visible: !root.renameActive
+                height: 26
+                verticalAlignment: Text.AlignVCenter
+                text: petState.petName
+                color: Qt.rgba(0.7, 1, 0.95, 1)
+                font.pixelSize: 15
+                font.bold: true
+              }
+
+              TextInput {
+                id: renameField
+                visible: root.renameActive
+                width: 140
+                height: 26
+                verticalAlignment: TextInput.AlignVCenter
+                text: petState.petName
+                color: Qt.rgba(0.7, 1, 0.95, 1)
+                font.pixelSize: 15
+                font.bold: true
+                selectByMouse: true
+                onAccepted: root.commitRename()
+                onActiveFocusChanged: if (!activeFocus && root.renameActive) root.renameActive = false
+                Keys.onEscapePressed: root.renameActive = false
+              }
+
+              // Fixed status chip (always available); bubbles cover one-off events.
+              Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                implicitWidth: chipText.width + 18
+                implicitHeight: chipText.height + 6
+                radius: Math.min(14, implicitHeight / 2)
+                color: {
+                  var l = pet.stateLabel
+                  if (l === "sleeping") return Qt.rgba(0.28, 0.4, 0.75, 0.55)
+                  if (l === "grumpy")  return Qt.rgba(0.75, 0.35, 0.3, 0.6)
+                  if (l === "hunting") return Qt.rgba(0.85, 0.65, 0.25, 0.6)
+                  if (l === "hungry")  return Qt.rgba(0.85, 0.55, 0.2, 0.6)
+                  if (l === "full")    return Qt.rgba(0.3, 0.75, 0.45, 0.55)
+                  if (l === "resting") return Qt.rgba(0.4, 0.55, 0.5, 0.5)
+                  return Qt.rgba(0.25, 0.6, 0.62, 0.55)
+                }
+
+                Text {
+                  id: chipText
+                  anchors.centerIn: parent
+                  text: pet.stateLabelText
+                  color: "white"
+                  font.pixelSize: 13
+                  font.bold: true
+                }
+              }
+
+              // Applied circuit patches (pet.json). Always visible so it is
+              // obvious when the pet's wiring is altered and survives sessions.
+              Text {
+                anchors.verticalCenter: parent.verticalCenter
+                height: 26
+                verticalAlignment: Text.AlignVCenter
+                visible: (petState.circuit || []).length > 0
+                text: "🧬 " + (petState.circuit || []).length + (petState.circuit.length === 1 ? " patch" : " patches")
+                color: Qt.rgba(0.85, 0.75, 1, 1)
+                font.pixelSize: 12
+                font.bold: true
+              }
+            }
+
+            Row {
+              spacing: 8
+
+              Text {
+                height: 9
+                verticalAlignment: Text.AlignVCenter
+                text: "⚡"
+                font.pixelSize: 11
+              }
+
+              Rectangle {
+                width: 170
+                height: 9
+                radius: 4.5
+                color: Qt.rgba(1, 1, 1, 0.12)
+
+                Rectangle {
+                  width: parent.width * Math.max(0, Math.min(1, petState.energy / 100))
+                  height: parent.height
+                  radius: 4.5
+                  color: petState.energy > 50 ? "#4dff88"
+                        : petState.energy > 20 ? "#ffbf5e"
+                        : "#ff4d5e"
+                }
+              }
+            }
+          }
+
+          // Right corner: rename + mind-view actions as roomy buttons.
+          Row {
+            anchors.right: parent.right
+            anchors.rightMargin: 14
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 8
+
+            Rectangle {
+              id: editNameBtn
+              visible: !root.renameActive
+              width: 38
+              height: 38
+              radius: 10
+              color: Qt.rgba(1, 1, 1, 0.08)
+              border.color: Qt.rgba(0.45, 1, 0.9, 0.25)
+              border.width: 1
+
+              Text {
+                anchors.centerIn: parent
+                text: "✏️"
+                font.pixelSize: 18
+              }
+              MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+                onEntered: parent.color = Qt.rgba(1, 1, 1, 0.16)
+                onExited: parent.color = Qt.rgba(1, 1, 1, 0.08)
+                onClicked: {
+                  root.renameActive = true
+                  renameField.forceActiveFocus()
+                  Qt.callLater(function() { renameField.selectAll() })
+                }
+              }
+            }
+
+            Rectangle {
+              id: mindBtn
+              width: 38
+              height: 38
+              radius: 10
+              color: Qt.rgba(1, 1, 1, root.mindOpen ? 0.18 : 0.08)
+              border.color: Qt.rgba(0.45, 1, 0.9, 0.25)
+              border.width: 1
+
+              Text {
+                anchors.centerIn: parent
+                text: "🧠"
+                font.pixelSize: 18
+              }
+              MouseArea {
+                anchors.fill: parent
+                hoverEnabled: true
+                onEntered: parent.color = Qt.rgba(1, 1, 1, 0.16)
+                onExited: parent.color = Qt.rgba(1, 1, 1, root.mindOpen ? 0.18 : 0.08)
+                onClicked: root.mindOpen = !root.mindOpen
+              }
+            }
+          }
         }
       }
     }
