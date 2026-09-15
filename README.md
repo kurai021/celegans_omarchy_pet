@@ -27,6 +27,7 @@ omarchy plugin add https://github.com/kurai021/celegans-pet.git --enable
 - **Habituation to touch**: Touching stays *unpleasant* — the pet still recoils, grumbles, and keeps its negative valence. But the more it is handled, the more the tactile stimulus loses its alarm: over ~10 touches the response decays to a ~35% floor and its protests soften from "Don't touch me!" to "Okay, okay. Not scary anymore." (still not a hug). Sensitivity slowly recovers if you leave it alone.
 - **Memory persistence**: everything above lives in `memory` in `pet.json` and survives restarts. Old `pet.json` files without `memory` load unchanged (defaults apply); `mealSites` is reserved for a future spatial-memory phase.
 - **Mind overlay (🧠)**: the button next to the ✏️ opens a read-only window into the pet's head. It answers *"what is it doing, and why?"* in plain words: the current state (the same stable chip label plus one interpretive sentence), a **Why?** row of short qualitative chips built from the live signals (energy, food-smell direction, recent touches, the learned "hand means food" expectation, sleepiness, activity — no raw numbers), and a **Recent:** list of real events (fell asleep / woke up, found food, reacted to a touch, 🧠 learned, anticipating food). Memory of F2 shows up here exactly when the pet actually learns or expects food. The overlay is pure interpretation: it reads signals the pet already uses for movement, but never changes the simulation.
+- **Circuit overlay (🧬)**: the "circuit" button in the Mind header opens a wiring editor for the *real* connectome. Every synapse shown is introspected from `Celegans.js` (its actual base weight — e.g. `AVL→MVL10 = −5`), and a slider drag overrides that weight absolutely ("∓" flips sign, ✕ removes the override). You can also add a **new** connection (base 0) between any real cell pair. The session is isolated exactly like the Experiment Lab: opening snapshots the brain *and* the active patch map, and closing restores both. The only path that writes to `pet.json` is the explicit ⚡ **apply to pet** button — that patch set then survives sessions, reloads and restarts. Presets (chemotaxis ↑, escape kick, chemo shortcut, calm touch) are hypotheses, not guarantees: the harness in `experiments/` measures what they actually do (for 20260914 those presets do **not** rescue aux-off navigation, and they reshape rather than amplify the tail reflex — see docs).
 
 ## ⚙️ Configuration
 
@@ -76,8 +77,18 @@ with its harness, results and a human-readable reading.
   injection code, reproducible seeds. Bottom line: the channels hit real cells
   with real synapses, the tail poke is a strong reliable reflex, and thermo /
   chemical-B couple into the connectome only with amplification (and remain
-  fragile seed-to-seed) — which is the honest frontier the future circuit
-  phase is opening.
+  fragile seed-to-seed) — which is the honest frontier the circuit phase
+  opened.
+  Full method and numbers in
+  [`experiments/README.md`](experiments/README.md).
+
+- **Phase A — Circuit Lab** (done): edits the real wiring (absolute weight
+  overrides per synapse, new connections allowed) and measures whether that
+  changes the worm — with the same patch engine the overlay uses. Bottom line:
+  a self-check proves the editor sees the real base weights (3689 synapses,
+  negatives included), and the presets measurably reshape the tail reflex but
+  do not rescue aux-off navigation at the tested scale. The harness is the
+  referee (`node experiments/circuit-tuner.js`).
   Full method and numbers in
   [`experiments/README.md`](experiments/README.md).
 

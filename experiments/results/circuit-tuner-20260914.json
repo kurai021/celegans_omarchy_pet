@@ -1,0 +1,115 @@
+{
+  "seed": 20260914,
+  "date": "2026-09-15T03:52:52.613Z",
+  "scenarios": [
+    {
+      "scenario": "A",
+      "seed": 20260914,
+      "trials": 40,
+      "runs": [
+        {
+          "config": "control",
+          "successRate": 52.5,
+          "medianCyclesToFood": "-",
+          "meanCyclesAll": 1478,
+          "meanDistPx": 1907,
+          "spikesPerCycle": 31.635,
+          "meanLR": -2.28
+        },
+        {
+          "config": "chemotaxis",
+          "successRate": 50,
+          "medianCyclesToFood": "-",
+          "meanCyclesAll": 1599,
+          "meanDistPx": 2075,
+          "spikesPerCycle": 32.184,
+          "meanLR": -2.29
+        },
+        {
+          "config": "escape",
+          "successRate": 55,
+          "medianCyclesToFood": "-",
+          "meanCyclesAll": 1421,
+          "meanDistPx": 1834,
+          "spikesPerCycle": 31.612,
+          "meanLR": -2.27
+        },
+        {
+          "config": "shortcut",
+          "successRate": 47.5,
+          "medianCyclesToFood": "-",
+          "meanCyclesAll": 1570,
+          "meanDistPx": 2034,
+          "spikesPerCycle": 31.995,
+          "meanLR": -2.32
+        },
+        {
+          "config": "calm",
+          "successRate": 47.5,
+          "medianCyclesToFood": "-",
+          "meanCyclesAll": 1409,
+          "meanDistPx": 1823,
+          "spikesPerCycle": 31.61,
+          "meanLR": -2.24
+        },
+        {
+          "config": "all",
+          "successRate": 55,
+          "medianCyclesToFood": "-",
+          "meanCyclesAll": 1416,
+          "meanDistPx": 1843,
+          "spikesPerCycle": 32.299,
+          "meanLR": -2.37
+        }
+      ]
+    },
+    {
+      "scenario": "B",
+      "seed": 20260914,
+      "runs": [
+        {
+          "config": "control",
+          "dMotor0": 666,
+          "dMotor50": 804,
+          "dFwd50": 160,
+          "reflex": "yes/yes/yes"
+        },
+        {
+          "config": "chemotaxis",
+          "dMotor0": -1128,
+          "dMotor50": -1712,
+          "dFwd50": -296,
+          "reflex": "yes/yes/yes"
+        },
+        {
+          "config": "escape",
+          "dMotor0": -877,
+          "dMotor50": -469,
+          "dFwd50": 321,
+          "reflex": "yes/yes/yes"
+        },
+        {
+          "config": "shortcut",
+          "dMotor0": 1241,
+          "dMotor50": 738,
+          "dFwd50": -296,
+          "reflex": "yes/yes/yes"
+        },
+        {
+          "config": "calm",
+          "dMotor0": 666,
+          "dMotor50": 1017,
+          "dFwd50": 263,
+          "reflex": "yes/yes/yes"
+        },
+        {
+          "config": "all",
+          "dMotor0": 474,
+          "dMotor50": -8,
+          "dFwd50": 94,
+          "reflex": "yes/—/yes"
+        }
+      ]
+    }
+  ]
+}

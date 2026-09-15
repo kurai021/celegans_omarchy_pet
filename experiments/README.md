@@ -243,3 +243,111 @@ poke visibly twitches it.
 - `experiments/stimulus-lab.js` — reproducible Phase B harness.
 - `experiments/results/stimulus-lab-<seed>.json`,
   `experiments/results/stimulus-B-<seed>.tsv` — run outputs per seed.
+
+## Phase A — Circuit Lab (do real synapse edits change what the worm does?)
+
+**Question**: the Circuit overlay edits the *actual wiring* — absolute weight
+overrides per `FROM:TO` on the real `Celegans.js` connectome. Does rewiring
+those synapses move (A) food-searching success in the aux-off regime, and
+(B) the tail-touch reflex? Or does a patch set just change numbers in the UI?
+
+**Why it matters**: Phase C and B showed the connectome alone navigates ~60 %
+and that amplifying injected charge collapses taxis. Phase A is the direct
+experiment: instead of turning up the *input*, we turn up the *synapses*. The
+same honesty rules apply — the harness uses the **same patch engine** the UI
+uses (`brain.setCircuitPatches`), so what is measured is what the live panel
+would do.
+
+### Method
+
+- The introspector (`Brain.prototype.installCircuitPatches`) derives every real
+  base weight by running each connectome entry against a scratch accumulator.
+  Before anything is measured, a **self-check** confirms twelve known base
+  weights (including a negative one, `AVL→MVL10 = −5`) and confirms two
+  deliberately-absent pairs (`PLML→AVDR`, `ADFL→SMDVL`) read 0 — so "*NEW
+  synapse*" in the editor really means base 0. The scanner found
+  **3689 real synapses**; that list *is* the Circuit editor's source.
+- Presets are transcribed 1:1 from the overlay; each is applied with
+  `setCircuitPatches`, the exact engine the slider drags use.
+- Scenario A reuses the Phase C aux-off walk (no auxiliary steering: only the
+  wiring steers), N=40, seeded: success %, cycles, distance, spikes, L−R bias.
+- Scenario B reuses the Phase B poke: one symmetric 150-charge `PLML/PLMR`
+  poke at cycle 0/50/110, Δ motor over 120 cycles vs a sham poke, per config
+  (a response is scored when |Δ motor| ≥ 25).
+
+### Reproduce
+
+```sh
+node experiments/circuit-tuner.js                # scenarios A+B, default seed
+node experiments/circuit-tuner.js --scenario=A   # one scenario | B | all
+node experiments/circuit-tuner.js --seed=777     # any other seed
+```
+
+Output: console tables + `experiments/results/circuit-tuner-<seed>.json` +
+`experiments/results/circuit-A-<seed>.tsv`. A failed base-weight self-check
+aborts the run.
+
+### Scenario A — patches vs. food-searching (aux OFF), 40 trials/apron
+
+| config | success% | medCyc | meanCyc | dist px | spk/cyc | meanLR |
+|---|---|---|---|---|---|---|
+| control | 52.5 % | — | 1478 | 1907 | 31.64 | −2.28 |
+| chemotaxis ↑ | 50 % | — | 1599 | 2075 | 32.18 | −2.29 |
+| escape kick | 55 % | — | 1421 | 1834 | 31.61 | −2.27 |
+| chemo shortcut (new) | 47.5 % | — | 1570 | 2034 | 32.00 | −2.32 |
+| calm touch | 47.5 % | — | 1409 | 1823 | 31.61 | −2.24 |
+| all presets | 55 % | — | 1416 | 1843 | 32.30 | −2.37 |
+
+(seed 20260914; median cycles-to-food empty — in aux-off most trials time out,
+mirroring Phase C.)
+
+### Scenario B — tail poke burst, patched vs. control (seed 20260914)
+
+| config | Δmotor @0 | Δmotor @50 | Δfwd @50 | reflex@0/50/110 |
+|---|---|---|---|---|
+| control | +666 | +804 | +160 | yes/yes/yes |
+| chemotaxis ↑ | −1128 | −1712 | −296 | yes/yes/yes |
+| escape kick | −877 | −469 | +321 | yes/yes/yes |
+| chemo shortcut | +1241 | +738 | −296 | yes/yes/yes |
+| calm touch | +666 | +1017 | +263 | yes/yes/yes |
+| all presets | +474 | −8 | +94 | yes/—/yes |
+
+### Reading (honest)
+
+**Real and measurable:**
+- The editor is not guessing: the introspector recovered the actual base
+  weights (3689 synapses, negative weights included), so every "patched" label
+  is a real electrical change and every "NEW" label is base 0 (new wiring).
+  Two presets deliberately add connections (the chemo shortcut, and the
+  escape kick's `PLML→AVDR`); the harness measures those as outright new wires.
+- Scenario B shows the patches are **not inert on the motor**: escape and
+  chemotaxis flip the sign of the poke burst within the response window (the
+  rewired pool debounces the poke instead of adding to it), and "all presets"
+  mutes the mid-window response. The same poke lands on a rewired brain and the
+  observable changes in the same seeded run.
+- Scenario A is a clean negative within this run: none of the presets moves
+  aux-off food-searching (47.5–55 % vs 52.5 % control; distance/spikes flat).
+
+**Not (or fragile):**
+- These presets, at these weights, in one seed and N=40 trials, do not create a
+  better hunter. Given Phase C (amplification collapses taxis, circuit very
+  dissipative) and Phase B (directional effects seed-dependent), a handful of
+  ±4–16 weight edits is a small change against a noisy ~50 % baseline: the
+  honest statement is *any* single-synapse rescue is unproven and likely weak.
+- The Scenario B shifts are seed-sized observations, not a recipe: the reflex
+  window remains present in every config (only its sign/shape moves), and no
+  config reliably amplifies the burst.
+
+**Finding**: the Circuit Lab exposes the real wiring honestly, but the wiring
+is a blunt instrument at the tested scale — small patch sets do not rescue
+navigation, and they reshape (rather than strengthen) the touch reflex. The
+harness is the referee: rerun it `--seed=<n>` before believing any claimed
+"better worm". The open question this phase leaves is *scale* — whether larger,
+graded weights on the chemo chain beat the noise the way ×3 amplification
+reliably did not.
+
+### Files
+
+- `experiments/circuit-tuner.js` — reproducible Phase A harness.
+- `experiments/results/circuit-tuner-<seed>.json`,
+  `experiments/results/circuit-A-<seed>.tsv` — run outputs per seed.
