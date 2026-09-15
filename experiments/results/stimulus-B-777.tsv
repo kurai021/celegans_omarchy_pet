@@ -1,0 +1,8 @@
+config	seed	meanLR	meanDistPx	projToSourcePx	towardPct	meanHits
+sham	777	-2.264	1540	-129	19	16.4
+🔥 thermo @ panel max (30)	777	-2.302	1542	36	56	14.4
+🧪 chem-B @ panel max (45)	777	-2.265	1541	-24	38	14.5
+🔥 thermo amplified x3 (90)	777	-2.283	1546	28	50	14.1
+🧪 chem-B amplified x3 (135)	777	-2.271	1540	-8	50	13.4
+🔥 thermo amplified x5 (150)	777	-2.274	1541	110	75	14.4
+🧪 chem-B amplified x5 (225)	777	-2.267	1536	11	50	14.3

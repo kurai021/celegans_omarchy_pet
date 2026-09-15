@@ -71,6 +71,16 @@ with its harness, results and a human-readable reading.
   Full method, configurations and numbers in
   [`experiments/README.md`](experiments/README.md).
 
+- **Phase B — Stimulus Lab** (done): validates the Lab overlay's thermo,
+  chemical-B and tail-touch channels the same way — real `Celegans.js`, real
+  injection code, reproducible seeds. Bottom line: the channels hit real cells
+  with real synapses, the tail poke is a strong reliable reflex, and thermo /
+  chemical-B couple into the connectome only with amplification (and remain
+  fragile seed-to-seed) — which is the honest frontier the future circuit
+  phase is opening.
+  Full method and numbers in
+  [`experiments/README.md`](experiments/README.md).
+
 ## ⚖️ License
 
 This project is licensed under the **GNU GPL v3**.

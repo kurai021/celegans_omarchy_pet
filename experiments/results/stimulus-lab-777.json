@@ -1,0 +1,68 @@
+{
+  "seed": 777,
+  "date": "2026-09-15T03:01:40.233Z",
+  "scenarios": [
+    {
+      "scenario": "B",
+      "seed": 777,
+      "runs": [
+        {
+          "config": "sham",
+          "meanLR": -2.264,
+          "meanDist": 1540,
+          "projToSource": -129,
+          "towardPct": 19,
+          "meanHits": 16.4
+        },
+        {
+          "config": "🔥 thermo @ panel max (30)",
+          "meanLR": -2.302,
+          "meanDist": 1542,
+          "projToSource": 36,
+          "towardPct": 56,
+          "meanHits": 14.4
+        },
+        {
+          "config": "🧪 chem-B @ panel max (45)",
+          "meanLR": -2.265,
+          "meanDist": 1541,
+          "projToSource": -24,
+          "towardPct": 38,
+          "meanHits": 14.5
+        },
+        {
+          "config": "🔥 thermo amplified x3 (90)",
+          "meanLR": -2.283,
+          "meanDist": 1546,
+          "projToSource": 28,
+          "towardPct": 50,
+          "meanHits": 14.1
+        },
+        {
+          "config": "🧪 chem-B amplified x3 (135)",
+          "meanLR": -2.271,
+          "meanDist": 1540,
+          "projToSource": -8,
+          "towardPct": 50,
+          "meanHits": 13.4
+        },
+        {
+          "config": "🔥 thermo amplified x5 (150)",
+          "meanLR": -2.274,
+          "meanDist": 1541,
+          "projToSource": 110,
+          "towardPct": 75,
+          "meanHits": 14.4
+        },
+        {
+          "config": "🧪 chem-B amplified x5 (225)",
+          "meanLR": -2.267,
+          "meanDist": 1536,
+          "projToSource": 11,
+          "towardPct": 50,
+          "meanHits": 14.3
+        }
+      ]
+    }
+  ]
+}

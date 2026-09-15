@@ -1,0 +1,270 @@
+{
+  "seed": 20260914,
+  "date": "2026-09-15T03:00:53.896Z",
+  "scenarios": [
+    {
+      "scenario": "A",
+      "seed": 20260914,
+      "runs": [
+        {
+          "name": "sham (no source)",
+          "L": 16212,
+          "R": 17126,
+          "bias": -914,
+          "spikesPerCycle": 30.72,
+          "quarters": [
+            26.8,
+            32.01,
+            31.09,
+            32.99
+          ]
+        },
+        {
+          "name": "🔥 thermo · src ahead-R",
+          "L": 16212,
+          "R": 17126,
+          "bias": -914,
+          "spikesPerCycle": 30.72,
+          "quarters": [
+            26.8,
+            32.01,
+            31.09,
+            32.99
+          ]
+        },
+        {
+          "name": "🔥 thermo · src ahead-L",
+          "L": 16212,
+          "R": 17126,
+          "bias": -914,
+          "spikesPerCycle": 30.72,
+          "quarters": [
+            26.8,
+            32.01,
+            31.09,
+            32.99
+          ]
+        },
+        {
+          "name": "🧪 chem-B · src ahead-R",
+          "L": 16212,
+          "R": 17126,
+          "bias": -914,
+          "spikesPerCycle": 30.72,
+          "quarters": [
+            26.8,
+            32.01,
+            31.09,
+            32.99
+          ]
+        },
+        {
+          "name": "🧪 chem-B · src ahead-L",
+          "L": 16212,
+          "R": 17126,
+          "bias": -914,
+          "spikesPerCycle": 30.72,
+          "quarters": [
+            26.8,
+            32.01,
+            31.09,
+            32.99
+          ]
+        },
+        {
+          "name": "🔥 thermo x5 · src ahead-R",
+          "L": 16212,
+          "R": 17126,
+          "bias": -914,
+          "spikesPerCycle": 30.72,
+          "quarters": [
+            26.8,
+            32.01,
+            31.09,
+            32.99
+          ]
+        },
+        {
+          "name": "🔥 thermo x5 · src ahead-L",
+          "L": 16212,
+          "R": 17126,
+          "bias": -914,
+          "spikesPerCycle": 30.72,
+          "quarters": [
+            26.8,
+            32.01,
+            31.09,
+            32.99
+          ]
+        },
+        {
+          "name": "🧪 chem-B x5 · src ahead-R",
+          "L": 16212,
+          "R": 17126,
+          "bias": -914,
+          "spikesPerCycle": 30.72,
+          "quarters": [
+            26.8,
+            32.01,
+            31.09,
+            32.99
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "B",
+      "seed": 20260914,
+      "runs": [
+        {
+          "config": "sham",
+          "meanLR": -2.281,
+          "meanDist": 1538,
+          "projToSource": 4,
+          "towardPct": 44,
+          "meanHits": 15.2
+        },
+        {
+          "config": "🔥 thermo @ panel max (30)",
+          "meanLR": -2.304,
+          "meanDist": 1542,
+          "projToSource": -33,
+          "towardPct": 25,
+          "meanHits": 15.4
+        },
+        {
+          "config": "🧪 chem-B @ panel max (45)",
+          "meanLR": -2.271,
+          "meanDist": 1547,
+          "projToSource": 68,
+          "towardPct": 56,
+          "meanHits": 17.9
+        },
+        {
+          "config": "🔥 thermo amplified x3 (90)",
+          "meanLR": -2.27,
+          "meanDist": 1546,
+          "projToSource": 90,
+          "towardPct": 75,
+          "meanHits": 14.3
+        },
+        {
+          "config": "🧪 chem-B amplified x3 (135)",
+          "meanLR": -2.306,
+          "meanDist": 1539,
+          "projToSource": 92,
+          "towardPct": 69,
+          "meanHits": 17.4
+        },
+        {
+          "config": "🔥 thermo amplified x5 (150)",
+          "meanLR": -2.275,
+          "meanDist": 1549,
+          "projToSource": -8,
+          "towardPct": 44,
+          "meanHits": 15.4
+        },
+        {
+          "config": "🧪 chem-B amplified x5 (225)",
+          "meanLR": -2.303,
+          "meanDist": 1542,
+          "projToSource": 60,
+          "towardPct": 69,
+          "meanHits": 19.4
+        }
+      ]
+    },
+    {
+      "scenario": "C",
+      "seed": 20260914,
+      "shamMotor": 11103,
+      "shamFwd": 8931,
+      "runs": [
+        {
+          "pokeAt": 0,
+          "dMotor": 666,
+          "tailSetFired": 5,
+          "dFwd": -178,
+          "response": true
+        },
+        {
+          "pokeAt": 10,
+          "dMotor": 0,
+          "tailSetFired": 0,
+          "dFwd": 0,
+          "response": false
+        },
+        {
+          "pokeAt": 20,
+          "dMotor": 1526,
+          "tailSetFired": 2,
+          "dFwd": 34,
+          "response": true
+        },
+        {
+          "pokeAt": 30,
+          "dMotor": 295,
+          "tailSetFired": 17,
+          "dFwd": 1047,
+          "response": true
+        },
+        {
+          "pokeAt": 40,
+          "dMotor": 1672,
+          "tailSetFired": 5,
+          "dFwd": -86,
+          "response": true
+        },
+        {
+          "pokeAt": 50,
+          "dMotor": 804,
+          "tailSetFired": 1,
+          "dFwd": 160,
+          "response": true
+        },
+        {
+          "pokeAt": 60,
+          "dMotor": -251,
+          "tailSetFired": -4,
+          "dFwd": -217,
+          "response": true
+        },
+        {
+          "pokeAt": 70,
+          "dMotor": 837,
+          "tailSetFired": 14,
+          "dFwd": 181,
+          "response": true
+        },
+        {
+          "pokeAt": 80,
+          "dMotor": 152,
+          "tailSetFired": 3,
+          "dFwd": -68,
+          "response": true
+        },
+        {
+          "pokeAt": 90,
+          "dMotor": 60,
+          "tailSetFired": 10,
+          "dFwd": 166,
+          "response": true
+        },
+        {
+          "pokeAt": 100,
+          "dMotor": 643,
+          "tailSetFired": 6,
+          "dFwd": 89,
+          "response": true
+        },
+        {
+          "pokeAt": 110,
+          "dMotor": -88,
+          "tailSetFired": 7,
+          "dFwd": 66,
+          "response": true
+        }
+      ]
+    }
+  ]
+}
