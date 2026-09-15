@@ -18,7 +18,7 @@ Panel {
   property string petNameSetting: root.setting("petName", "")
   onPetNameSettingChanged: root.seedSetting()
   Component.onCompleted: root.seedSetting()
-  onOpenedChanged: if (!root.opened) { root.mindOpen = false; root.expertOpen = false }
+  onOpenedChanged: if (!root.opened) { root.mindOpen = false; root.expertOpen = false; root.labOpen = false }
 
   function seedSetting() {
     if (petState) petState.seedName(String(root.petNameSetting || ""))
@@ -52,6 +52,9 @@ Panel {
   // F4 Expert View: advanced read-only mode opened from the Mind overlay.
   // While open, it pauses the Mind overlay and samples the connectome.
   property bool expertOpen: false
+  // Phase B Stimulus Lab: third overlay, same ladder, opened from Mind. Its
+  // session snapshots the brain and never writes to pet.json.
+  property bool labOpen: false
 
   function commitRename() {
     var name = renameField.text
@@ -84,10 +87,16 @@ Panel {
 
   // Observation pipeline for the Expert View. Does zero work while the
   // overlay is closed (its Connections are disabled), and never writes back.
+  // The Lab overlay shares it so its live readout sees the same real signals.
   Panels.ConnectomeMonitor {
     id: monitor
     brainController: brainController
-    active: root.expertOpen
+    active: root.expertOpen || root.labOpen
+  }
+
+  // Phase B: persistent journal of Lab experiments (separate file from pet.json).
+  Panels.ExperimentJournal {
+    id: journal
   }
 
   KeyboardPanel {
@@ -97,9 +106,9 @@ Panel {
     owner: root.hostWidget || root
     open: root.opened
     focusTarget: keyCatcher
-    contentWidth: panel.fittedContentWidth(root.expertOpen ? 880 : 640)
-    contentHeight: panel.fittedContentHeight(root.expertOpen ? 640 : 480)
-    centerOnBar: root.expertOpen
+    contentWidth: panel.fittedContentWidth(root.expertOpen || root.labOpen ? 880 : 640)
+    contentHeight: panel.fittedContentHeight(root.expertOpen || root.labOpen ? 640 : 480)
+    centerOnBar: root.expertOpen || root.labOpen
 
     PanelKeyCatcher {
       id: keyCatcher
@@ -321,7 +330,7 @@ Panel {
         // nothing here feeds back into the simulation or moves the worm.
         Rectangle {
           id: mindOverlay
-          visible: root.mindOpen && !root.needsOnboarding && !root.expertOpen
+          visible: root.mindOpen && !root.needsOnboarding && !root.expertOpen && !root.labOpen
           z: 100
           width: Math.min(parent.width - 40, 420)
           height: Math.min(parent.height - 70, 380)
@@ -351,8 +360,37 @@ Panel {
 
               Item {
                 width: parent.width - mindTitle.width - expertBtn.implicitWidth
-                    - closeMindBtn.width - parent.spacing * 3
+                    - labBtn.implicitWidth - closeMindBtn.width - parent.spacing * 4
                 height: 1
+              }
+
+              Rectangle {
+                id: labBtn
+                implicitWidth: labBtnText.implicitWidth + 14
+                implicitHeight: 18
+                anchors.verticalCenter: parent.verticalCenter
+                radius: 9
+                color: Qt.rgba(0.35, 0.85, 0.7, 0.25)
+                border.color: Qt.rgba(0.55, 1, 0.85, 0.45)
+                border.width: 1
+
+                Text {
+                  id: labBtnText
+                  anchors.centerIn: parent
+                  text: "🧪 lab"
+                  color: "white"
+                  font.pixelSize: 9
+                  font.bold: true
+                }
+
+                MouseArea {
+                  anchors.fill: parent
+                  onClicked: {
+                    // Enter the stimulus lab (experiment without consequences).
+                    root.mindOpen = false
+                    root.labOpen = true
+                  }
+                }
               }
 
               Rectangle {
@@ -500,6 +538,24 @@ Panel {
           pet: pet
           monitor: monitor
           onClosed: root.expertOpen = false
+        }
+
+        // 🧪 Phase B Stimulus Lab: the third rung of the ladder. Snapshot-based
+        // isolation: stimuli only touch synaptic charges while it is open, and
+        // closing restores the brain; the journal keeps what WE learned.
+        Panels.LabPanel {
+          id: labView
+          anchors.fill: parent
+          anchors.margins: 10
+          visible: root.labOpen && !root.needsOnboarding
+          z: 102
+          pet: pet
+          monitor: monitor
+          brainController: brainController
+          world: world
+          journal: journal
+          onClosed: root.labOpen = false
+          onToMind: { root.labOpen = false; root.mindOpen = true }
         }
       }
     }

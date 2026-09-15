@@ -1,3 +1,7 @@
 BrainConnector 1.0 BrainConnector.qml
 Pet 1.0 Pet.qml
 PetVisual 1.0 PetVisual.qml
+ExperimentJournal 1.0 ExperimentJournal.qml
+LabSlider 1.0 LabSlider.qml
+LabPanel 1.0 LabPanel.qml
+CellRow 1.0 CellRow.qml

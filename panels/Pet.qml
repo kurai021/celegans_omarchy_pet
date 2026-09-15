@@ -469,6 +469,26 @@ Item {
             petInstance.lastSmellRight = r0
             petInstance.brainController.setChemoSense(f0, l0, r0)
 
+            // Phase B Lab channels: same probes, same fields. The pet never
+            // steers from these directly (honesty): they only reach the
+            // connectome, so any effect is the wiring's, not a bypass.
+            if (petInstance.world) {
+                var t0 = petInstance.world.thermoAt(cx + c * petInstance.forwardProbe,
+                    cy + s * petInstance.forwardProbe)
+                var tl0 = petInstance.world.thermoAt(px - s * petInstance.sideProbeSpread,
+                    py + c * petInstance.sideProbeSpread)
+                var tr0 = petInstance.world.thermoAt(px + s * petInstance.sideProbeSpread,
+                    py - c * petInstance.sideProbeSpread)
+                var b0 = petInstance.world.chemBAt(cx + c * petInstance.forwardProbe,
+                    cy + s * petInstance.forwardProbe)
+                var bl0 = petInstance.world.chemBAt(px - s * petInstance.sideProbeSpread,
+                    py + c * petInstance.sideProbeSpread)
+                var br0 = petInstance.world.chemBAt(px + s * petInstance.sideProbeSpread,
+                    py - c * petInstance.sideProbeSpread)
+                petInstance.brainController.setThermoSense(t0, tl0, tr0)
+                petInstance.brainController.setChemBSense(b0, bl0, br0)
+            }
+
             // --- eat when the nose reaches a pellet ---
             if (petInstance.world && petInstance.world.eatAt(cx, cy, petInstance.eatReach)) {
                 petInstance.logMindEvent("🍽️", "found and ate food")

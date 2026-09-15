@@ -23,9 +23,22 @@ Item {
   property real smellRadius: 220     // chemical range of a pellet
   property var foodItems: []         // [{ id, x, y, r }]
 
+  // --- Phase B: Lab stimulus fields ---------------------------------------
+  // Two extra soluble fields the connectome senses through its own real cells
+  // (AFD thermo, AWA chemical-B), each with its own falloff and a DECORATIVE,
+  // collision-free source. Sources only exist while the Lab places them; the
+  // pet never walks around them, it only smells/feels their field.
+  property real thermoRadius: 260
+  property real chemBRadius: 260
+  property var thermoSources: []     // [{ x, y }] warm gradient
+  property var chemBSources: []      // [{ x, y }] chemical-B gradient
+
   // --- interaction ---------------------------------------------------------
   property bool allowFoodDrop: true
   property bool autoFeedEnabled: false   // host (Panel) flips on when hungry
+  // Lab placement mode: while set, clicks place a stimulus source instead of
+  // dropping food. "none" | "thermo" | "chemB".
+  property string labPlaceMode: "none"
   // Emitted whenever a pellet appears. `source` is "hand" when the user
   // clicked to drop it and "auto" when the auto feeder spawned it; Pet uses
   // it to credit hand->food memories only for real hand actions.
@@ -92,6 +105,56 @@ Item {
       }
     }
     return s
+  }
+
+  // Like items[i], but each source contributes its own decayed gradient. The
+  // Lab fields use the same peak-normalized falloff as the food smell (0..1
+  // per source) so probe intensities across channels are directly comparable.
+  function fieldAt(sources, radius, x, y) {
+    var s = 0
+    for (var i = 0; i < sources.length; i++) {
+      var dx = sources[i].x - x
+      var dy = sources[i].y - y
+      var d = Math.sqrt(dx * dx + dy * dy)
+      if (d < radius) {
+        var t = 1 - d / radius
+        s += t * t
+      }
+    }
+    return s
+  }
+  function thermoAt(x, y) { return world.fieldAt(world.thermoSources, world.thermoRadius, x, y) }
+  function chemBAt(x, y) { return world.fieldAt(world.chemBSources, world.chemBRadius, x, y) }
+
+  function addThermoSource(x, y) {
+    x = Math.max(14, Math.min(world.width - 14, x))
+    y = Math.max(14, Math.min(world.height - 14, y))
+    world.thermoSources = world.thermoSources.concat([{ "x": x, "y": y }])
+    canvas.requestPaint()
+  }
+  function addChemBSource(x, y) {
+    x = Math.max(14, Math.min(world.width - 14, x))
+    y = Math.max(14, Math.min(world.height - 14, y))
+    world.chemBSources = world.chemBSources.concat([{ "x": x, "y": y }])
+    canvas.requestPaint()
+  }
+  function clearLabStimuli() {
+    world.thermoSources = []
+    world.chemBSources = []
+    canvas.requestPaint()
+  }
+
+  // Public repaint hook (the Lab panel calls it after re-applying a config).
+  function refresh() {
+    canvas.requestPaint()
+  }
+  function clearThermo() {
+    world.thermoSources = []
+    canvas.requestPaint()
+  }
+  function clearChemB() {
+    world.chemBSources = []
+    canvas.requestPaint()
   }
 
   // Obstacles as plain rect objects (for the steering logic).
@@ -243,6 +306,42 @@ Item {
         ctx.fill()
         ctx.globalAlpha = 1
       }
+
+      // thermo sources: warm glow + core, no collision (decorative field)
+      var thermos = world.thermoSources
+      for (var th = 0; th < thermos.length; th++) {
+        var hs = thermos[th]
+        ctx.beginPath()
+        ctx.arc(hs.x, hs.y, 16, 0, 2 * Math.PI)
+        ctx.fillStyle = "rgba(255, 140, 40, 0.18)"
+        ctx.fill()
+        ctx.beginPath()
+        ctx.arc(hs.x, hs.y, 8, 0, 2 * Math.PI)
+        ctx.fillStyle = "rgba(255, 170, 70, 0.5)"
+        ctx.fill()
+        ctx.beginPath()
+        ctx.arc(hs.x, hs.y, 3.5, 0, 2 * Math.PI)
+        ctx.fillStyle = "rgba(255, 230, 160, 0.95)"
+        ctx.fill()
+      }
+
+      // chemical-B sources: teal pellet look, distinct from food
+      var cbs = world.chemBSources
+      for (var cb = 0; cb < cbs.length; cb++) {
+        var cs = cbs[cb]
+        ctx.beginPath()
+        ctx.arc(cs.x, cs.y, 9, 0, 2 * Math.PI)
+        ctx.fillStyle = "rgba(64, 210, 190, 0.25)"
+        ctx.fill()
+        ctx.beginPath()
+        ctx.arc(cs.x, cs.y, 4.5, 0, 2 * Math.PI)
+        ctx.fillStyle = "#40d2be"
+        ctx.fill()
+        ctx.beginPath()
+        ctx.arc(cs.x - 1, cs.y - 1, 1.5, 0, 2 * Math.PI)
+        ctx.fillStyle = "rgba(255, 255, 255, 0.8)"
+        ctx.fill()
+      }
     }
   }
 
@@ -252,7 +351,13 @@ Item {
     anchors.fill: parent
     acceptedButtons: Qt.LeftButton
     onClicked: (mouse) => {
-      if (world.allowFoodDrop) world.dropFood(mouse.x, mouse.y, "hand")
+      if (world.labPlaceMode === "thermo") {
+        world.addThermoSource(mouse.x, mouse.y)
+      } else if (world.labPlaceMode === "chemB") {
+        world.addChemBSource(mouse.x, mouse.y)
+      } else if (world.allowFoodDrop) {
+        world.dropFood(mouse.x, mouse.y, "hand")
+      }
     }
   }
 }
