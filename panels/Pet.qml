@@ -260,6 +260,14 @@ Item {
         messageTimer.restart()
     }
 
+    // Visible confirmation that a stimulus landed (Lab tail poke). The real
+    // response from the wiring is a subtle motor curve; the flash makes the
+    // event impossible to miss without exaggerating the reflex itself.
+    function flashStartle() {
+        petVisual.isStartled = true
+        flashTimer.start()
+    }
+
     // Every time the connectome completes a cycle we translate the motor
     // forces into rotation + displacement within the window, then prime the
     // next cycle with fresh sensory (smell) input.

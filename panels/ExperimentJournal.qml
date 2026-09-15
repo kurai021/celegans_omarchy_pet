@@ -64,4 +64,15 @@ Item {
 
   function count() { return journal.entries.length }
   function at(i) { return journal.entries[i] }
+
+  // Delete one entry by id and persist. Unknown ids are ignored.
+  function remove(id) {
+    var list = []
+    for (var i = 0; i < journal.entries.length; i++) {
+      if (journal.entries[i].id !== id) list.push(journal.entries[i])
+    }
+    if (list.length === journal.entries.length) return
+    journal.entries = list
+    journal.save()
+  }
 }

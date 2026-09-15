@@ -86,6 +86,9 @@ Panel {
 
   Panels.PetState {
     id: petState
+    // Pause pet aging when the panel is closed: energy never drains (nor
+    // recovers) in the background, so an overnight away no longer starves it.
+    lifeActive: root.opened
   }
 
   // Observation pipeline for the Expert View. Does zero work while the
@@ -121,8 +124,8 @@ Panel {
     owner: root.hostWidget || root
     open: root.opened
     focusTarget: keyCatcher
-    contentWidth: panel.fittedContentWidth(root.expertOpen || root.labOpen || root.circuitOpen ? 960 : 640)
-    contentHeight: panel.fittedContentHeight(root.expertOpen || root.labOpen || root.circuitOpen ? 640 : 480)
+    contentWidth: panel.fittedContentWidth(root.expertOpen || root.labOpen || root.circuitOpen ? 1024 : 960)
+    contentHeight: panel.fittedContentHeight(root.expertOpen || root.labOpen || root.circuitOpen ? 768 : 640)
     centerOnBar: root.expertOpen || root.labOpen || root.circuitOpen
 
     PanelKeyCatcher {
@@ -141,7 +144,11 @@ Panel {
         Panels.World {
           id: world
           anchors.fill: parent
-          autoFeedEnabled: petState.energy < 55
+          // The auto feeder and the world's own timers only run while the
+          // panel is open (the pet can't eat while nobody is watching), so
+          // food never rains down in the background.
+          live: root.opened
+          autoFeedEnabled: root.opened && petState.energy < 55
         }
 
         Panels.Pet {
@@ -208,6 +215,18 @@ Panel {
                   Qt.callLater(function() { renameField.selectAll() })
                 }
               }
+            }
+
+            // Applied circuit patches (pet.json). Always visible so it is
+            // obvious when the pet's wiring is altered and survives sessions.
+            Text {
+              visible: (petState.circuit || []).length > 0
+              height: 16
+              verticalAlignment: Text.AlignVCenter
+              text: "🧬 " + (petState.circuit || []).length + (petState.circuit.length === 1 ? " patch" : " patches")
+              color: Qt.rgba(0.85, 0.75, 1, 1)
+              font.pixelSize: 8
+              font.bold: true
             }
 
             // Mind overlay toggle: reads "what is it doing / why" — read-only.

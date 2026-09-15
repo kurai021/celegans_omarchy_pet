@@ -19,6 +19,10 @@ Item {
   property real energy: startEnergy   // 0..100 (0 = starving, >90 = "full")
   property real sleepiness: 0       // 0..1 (1 = ready to sleep)
   property bool asleep: false
+  // The pet is only "alive" while the panel is open. The host binds this to
+  // the panel's opened state; while false, energy and sleep drive freeze so
+  // closing the app PAUSES the pet instead of starving it in the background.
+  property bool lifeActive: true
   property var stats: { "distance": 0, "startled": 0, "meals": 0 }
 
   // --- learned memory (F2) ------------------------------------------------
@@ -240,14 +244,15 @@ Item {
     }
   }
 
-  // Even with the panel closed the pet ages slowly in the background, so
-  // energy things while you're away (gently).
+  // Aging while the pet is asleep or the panel is closed is suspended (see
+  // `lifeActive`): the worm pauses when you stop looking at it. Memories
+  // still decay in real time so learned habits stay time-sensitive.
   Timer {
     interval: 1000
     running: true
     repeat: true
     onTriggered: {
-      if (!state.asleep) {
+      if (state.lifeActive && !state.asleep) {
         state.energy = Math.max(0, state.energy - 1 / 300); // -1 point / 5 min
         if (state.energy <= 0) state.changed();
       }

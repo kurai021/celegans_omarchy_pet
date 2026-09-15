@@ -38,6 +38,10 @@ Item {
     property bool tailOpen: true
     property real thermoStrength: 0.5
     property real chemBStrength: 0.5
+    // Boost toggle: ×3 on BOTH channels, matching the strongest gains the
+    // harness measured a real taxis response with (doc: experiments/README.md
+    // Phase B). Off by default so the honest sub-threshold behavior stays first.
+    property bool boost: false
     readonly property real thermoBaseWeight: 30
     readonly property real chemBBaseWeight: 45
 
@@ -62,16 +66,49 @@ Item {
     property string motorRText: "0"
     property string liveContext: "waiting for cycles…"
     property int frame: 0
+    // Live probe intensity and max injected charge on the first cell of each
+    // channel; the 100 ms UI timer below updates them so the observer sees
+    // what the pet is actually "smelling" and the effective drive on the
+    // sensor cells — even when it is not enough to trigger a fire.
+    property real thProbe: 0
+    property real cbProbe: 0
+    property real thCharge: 0
+    property real cbCharge: 0
+
+    // Probe intensity at the pet's forward sensor (synthetic thermo/chemB
+    // fields, same falloff as food smell).  Only meaningful while the pet
+    // exists on screen.
+    function probeAt(fieldFn) {
+        if (!lab.pet || !lab.world || typeof fieldFn !== "function") return 0
+        var cx = lab.pet.x + lab.pet.width / 2
+        var cy = lab.pet.y + lab.pet.height / 2
+        var r = (lab.pet.rotation || 0) * Math.PI / 180
+        var fwd = (lab.pet.forwardProbe || 80)
+        return fieldFn(cx + Math.cos(r) * fwd, cy + Math.sin(r) * fwd)
+    }
+
+    // Max charge currently sitting on the given cell set (from monitor).
+    function chargePeak(cells) {
+        if (!lab.monitor) return 0
+        var m = 0
+        for (var i = 0; i < cells.length; i++) {
+            var ci = GraphData.graphNodes().indexOf(cells[i])
+            var ch = (ci !== -1 && lab.monitor.charges) ? (lab.monitor.charges[ci] || 0) : 0
+            if (ch > m) m = ch
+        }
+        return m
+    }
 
     readonly property string honestyNote:
         "Cells are real (AFD thermo, AWA chemical-B, PLM tail); the gradient→charge mapping is synthetic. No auxiliary steering for these channels — the response is the wiring's. Seeded reproductions: node experiments/stimulus-lab.js"
 
     function pushWeights() {
         if (!lab.brainController) return
+        var mult = lab.boost ? 3 : 1
         lab.brainController.thermoWeight = lab.running && lab.thermoOn
-            ? lab.thermoBaseWeight * lab.thermoStrength : 0
+            ? lab.thermoBaseWeight * lab.thermoStrength * mult : 0
         lab.brainController.chemBWeight = lab.running && lab.chemBOn
-            ? lab.chemBBaseWeight * lab.chemBStrength : 0
+            ? lab.chemBBaseWeight * lab.chemBStrength * mult : 0
     }
 
     function startSession() {
@@ -110,6 +147,9 @@ Item {
 
     function pokeTail(side) {
         if (lab.brainController) lab.brainController.stimulateTail(side, 1)
+        // Visible flash so the user sees the stimulus landed (the motor
+        // curve from the wiring is subtle and easy to miss at low energy).
+        if (lab.pet && typeof lab.pet.flashStartle === "function") lab.pet.flashStartle()
     }
 
     function togglePlaceMode(mode) {
@@ -160,7 +200,8 @@ Item {
             "thermo": { "on": lab.thermoOn, "strength": lab.thermoStrength, "base": lab.thermoBaseWeight,
                         "sources": lab.world ? lab.world.thermoSources.slice() : [] },
             "chemB": { "on": lab.chemBOn, "strength": lab.chemBStrength, "base": lab.chemBBaseWeight,
-                       "sources": lab.world ? lab.world.chemBSources.slice() : [] }
+                       "sources": lab.world ? lab.world.chemBSources.slice() : [] },
+            "boost": lab.boost
         }
     }
 
@@ -201,6 +242,7 @@ Item {
             lab.chemBStrength = Number(cfg.chemB.strength) || 0
             if (lab.world) lab.world.chemBSources = (cfg.chemB.sources || []).slice()
         }
+        if (cfg.boost !== undefined) lab.boost = !!cfg.boost
         lab.pushWeights()
         if (lab.world && typeof lab.world.refresh === "function") lab.world.refresh()
     }
@@ -220,6 +262,14 @@ Item {
             lab.motorRText = lab.brainController ? Math.abs(lab.brainController.rightMotor).toFixed(1) : "0"
             lab.liveContext = lab.pet
                 ? lab.pet.stateLabelText + " — " + lab.pet.mindSummary() : "waiting…"
+            // Live probe/charge readouts: give the user something to watch
+            // even when nothing fires yet (the honest sub-threshold picture).
+            if (lab.world) {
+                lab.thProbe = lab.probeAt(function(x, y) { return lab.world.thermoAt(x, y) })
+                lab.cbProbe = lab.probeAt(function(x, y) { return lab.world.chemBAt(x, y) })
+            }
+            lab.thCharge = lab.chargePeak(lab.thermoCells)
+            lab.cbCharge = lab.chargePeak(lab.chemBCells)
         }
     }
 
@@ -739,6 +789,46 @@ Item {
                             }
                         }
 
+                        // -- channel amplify toggle -----------------------
+                        Rectangle {
+                            width: parent.width
+                            height: 24
+                            radius: 8
+                            color: lab.boost ? Qt.rgba(0.85, 0.65, 0.2, 0.35)
+                                  : Qt.rgba(1, 1, 1, 0.08)
+                            border.color: lab.boost ? Qt.rgba(0.9, 0.7, 0.3, 0.5)
+                                  : Qt.rgba(1, 1, 1, 0.08)
+                            border.width: 1
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 6
+                                Text {
+                                    text: "⚡ ×3 amplify"
+                                    color: "white"
+                                    font.pixelSize: 9
+                                    font.bold: true
+                                }
+                                Text {
+                                    text: lab.boost ? "on" : "off"
+                                    color: lab.boost ? "#ffbf5e"
+                                          : Qt.rgba(0.6, 0.7, 0.7, 1)
+                                    font.pixelSize: 8
+                                }
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: { lab.boost = !lab.boost; lab.pushWeights() }
+                            }
+                        }
+
+                        Text {
+                            width: parent.width
+                            wrapMode: Text.Wrap
+                            text: "when nothing happens at max slider, ⚡ ×3 is where the harness measured a real taxis response"
+                            color: Qt.rgba(0.55, 0.62, 0.6, 1)
+                            font.pixelSize: 8
+                        }
+
                         Text {
                             width: parent.width
                             wrapMode: Text.Wrap
@@ -795,6 +885,37 @@ Item {
                         CellRow { title: "🔥 thermo"; count: lab.thermoFires; cells: lab.thermoCells; src: lab.monitor }
                         CellRow { title: "🧪 chem-B"; count: lab.chemBFires; cells: lab.chemBCells; src: lab.monitor }
                         CellRow { title: "🔔 tail"; count: lab.tailFires; cells: lab.tailCells; src: lab.monitor }
+
+                        // Live probe intensity + charge on the sensor cells.
+                        // Gives the user something to watch even when nothing
+                        // fires (the honest sub-threshold picture): crank the
+                        // slider until the charge is large enough for a fire.
+                        Column {
+                            spacing: 2
+                            Text {
+                                text: "🔥 probe " + lab.thProbe.toFixed(2) + " → charge " + lab.thCharge.toFixed(1)
+                                color: Qt.rgba(0.82, 0.9, 0.88, 1)
+                                font.pixelSize: 8
+                            }
+                            Text {
+                                text: "🧪 probe " + lab.cbProbe.toFixed(2) + " → charge " + lab.cbCharge.toFixed(1)
+                                color: Qt.rgba(0.82, 0.9, 0.88, 1)
+                                font.pixelSize: 8
+                            }
+                            Text {
+                                width: 230
+                                wrapMode: Text.Wrap
+                                text: lab.thermoFires === 0 && lab.chemBFires === 0
+                                    && (lab.thCharge + lab.cbCharge) > 0
+                                    ? "charge is present — crank the slider higher for a fire."
+                                    : lab.thermoFires === 0 && lab.chemBFires === 0
+                                    ? "place sources + arm the channel to see a response."
+                                    : ""
+                                visible: text !== ""
+                                color: Qt.rgba(0.6, 0.72, 0.7, 1)
+                                font.pixelSize: 8
+                            }
+                        }
 
                         Rectangle {
                             width: parent.width
@@ -894,7 +1015,7 @@ Item {
                         }
 
                         Text {
-                            text: journal.entries.length + " recorded · tap entry to re-apply"
+                            text: journal.entries.length + " recorded · ↺ re-apply · 🗑 delete"
                             color: Qt.rgba(0.5, 0.62, 0.6, 1)
                             font.pixelSize: 8
                         }
@@ -917,7 +1038,10 @@ Item {
 
                                 Column {
                                     anchors.fill: parent
-                                    anchors.margins: 7
+                                    anchors.leftMargin: 7
+                                    anchors.topMargin: 7
+                                    anchors.bottomMargin: 7
+                                    anchors.rightMargin: 40
                                     spacing: 3
 
                                     Text {
@@ -943,6 +1067,36 @@ Item {
                                                 ? " · state: " + modelData.results.stateContext : "")
                                         color: Qt.rgba(0.5, 0.62, 0.6, 1)
                                         font.pixelSize: 8
+                                    }
+                                }
+
+                                // explicit re-apply / delete actions (the whole
+                                // row also re-applies on click for muscle memory);
+                                // declared AFTER the row MouseArea so they sit on
+                                // top and win the hit test.
+                                Column {
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 5
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 3
+
+                                    Rectangle {
+                                        width: 30; height: 16; radius: 4
+                                        color: Qt.rgba(0.45, 1, 0.9, 0.18)
+                                        Text { anchors.centerIn: parent; text: "↺"; color: "white"; font.pixelSize: 9 }
+                                        MouseArea { anchors.fill: parent; onClicked: lab.applyConfig(modelData.config) }
+                                    }
+                                    Rectangle {
+                                        width: 30; height: 16; radius: 4
+                                        color: Qt.rgba(0.9, 0.45, 0.35, 0.22)
+                                        Text { anchors.centerIn: parent; text: "🗑"; color: "white"; font.pixelSize: 9 }
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            onClicked: {
+                                                if (lab.journal && typeof lab.journal.remove === "function")
+                                                    lab.journal.remove(modelData.id)
+                                            }
+                                        }
                                     }
                                 }
 

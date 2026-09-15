@@ -50,6 +50,14 @@ Item {
 
     property bool expanded: false      // browse the full connectome vs the focus pool
     property int maxWeight: 30
+    // Synapse search / filter: when non-empty, only rows whose FROM or TO
+    // contains the text are shown (case-insensitive). Presets that don't
+    // touch a matching cell are dimmed in the bar above.
+    property string filterText: ""
+    // Display list for the editor: keys of the rows matching the current
+    // filter. editorModel stays the master (session edits keep all rows, so
+    // hidden synapses are never lost); the view only filters the rendering.
+    property var viewKeys: []
 
     readonly property string honestyNote:
         "Patches override REAL synapses (absolute weight; base = the untouched wiring, introspected from Celegans.js). The session is isolated: ending restores the exact pre-session wiring. Only 'apply to pet' writes to pet.json. Seeded reproductions: node experiments/circuit-tuner.js"
@@ -150,6 +158,48 @@ Item {
         return circuit.baseOf(from, to)
     }
 
+    // --- filtering (view over the master editorModel) ----------------------
+    // The list the ListView renders is a key array (`viewKeys`); icons behind
+    // the delegate resolve each key back into the master model so filtering
+    // never crops edits made on rows that are currently hidden.
+    function rebuildView() {
+        var keys = []
+        var q = String(circuit.filterText || "").toUpperCase()
+        for (var i = 0; i < editorModel.count; i++) {
+            var r = editorModel.get(i)
+            if (q && String(r.from).toUpperCase().indexOf(q) === -1
+                && String(r.to).toUpperCase().indexOf(q) === -1) continue
+            keys.push(r.key)
+        }
+        circuit.viewKeys = keys
+    }
+
+    function viewIndex(key) {
+        for (var i = 0; i < editorModel.count; i++)
+            if (editorModel.get(i).key === key) return i
+        return -1
+    }
+    function keyFrom(key) { var i = circuit.viewIndex(key); return i === -1 ? "" : editorModel.get(i).from }
+    function keyTo(key) { var i = circuit.viewIndex(key); return i === -1 ? "" : editorModel.get(i).to }
+    function keyBase(key) { var i = circuit.viewIndex(key); return i === -1 ? 0 : editorModel.get(i).base }
+    function keyWeight(key) { var i = circuit.viewIndex(key); return i === -1 ? 0 : editorModel.get(i).weight }
+    function keySetWeight(key, w) {
+        var i = circuit.viewIndex(key)
+        if (i === -1) return
+        editorModel.setProperty(i, "weight", w)
+        circuit.sync()
+    }
+    // A preset is "associated" with a cell when any of its patches touches it
+    // (as from or to). Used to dim presets that don't match the filter.
+    function presetMatches(patches, q) {
+        if (!q) return true
+        for (var i = 0; i < patches.length; i++) {
+            if (String(patches[i].from).toUpperCase().indexOf(q) !== -1
+                || String(patches[i].to).toUpperCase().indexOf(q) !== -1) return true
+        }
+        return false
+    }
+
     function rebuildList() {
         editorModel.clear()
         var srcs = circuit.poolSources()
@@ -167,6 +217,7 @@ Item {
             }
         }
         circuit.maxWeight = Math.max(12, Math.ceil(maxW / 5) * 5)
+        circuit.rebuildView()
         circuit.refreshSummary()
     }
 
@@ -216,6 +267,7 @@ Item {
             var e = p.patches[j]
             circuit.setRowWeight(e.from, e.to, e.weight)
         }
+        circuit.rebuildView()
         circuit.sync()
         circuit.applyFeedback = "preset '" + p.label + "' loaded into the session"
     }
@@ -235,6 +287,7 @@ Item {
         }
         var base = circuit.baseOf(from, to)
         circuit.setRowWeight(from, to, circuit.newWeight)
+        circuit.rebuildView()
         circuit.applyFeedback = (base ? "patched " : "NEW synapse ") + from + "→" + to + " = " + circuit.newWeight
         circuit.sync()
     }
@@ -276,7 +329,11 @@ Item {
         circuit.running = false
         if (circuit.brainController && typeof circuit.brainController.restoreBrain === "function")
             circuit.brainController.restoreBrain()
-        circuit.applyFeedback = "session ended · wiring restored from snapshot"
+        // Rebuild the editor from the restored wiring so the window reflects
+        // EXACTLY what the pet now runs (reverts to the applied/persisted
+        // values, or to base if nothing was applied).
+        circuit.rebuildList()
+        circuit.applyFeedback = "session ended · wiring and editor restored from snapshot"
         Qt.callLater(function () { circuit.applyFeedback = "" })
     }
 
@@ -518,14 +575,24 @@ Item {
                                 }
                             }
 
-                            Item { width: Math.max(1, parent.parent.width - 150); height: 1 }
+                            Item { width: Math.max(1, parent.parent.width - 180); height: 1 }
 
                             Text {
-                                text: editorModel.count + " synapses"
+                                text: circuit.viewKeys.length + " / " + editorModel.count + " synapses"
                                 color: Qt.rgba(0.7, 0.7, 0.75, 1)
                                 font.pixelSize: 8
                                 anchors.verticalCenter: parent.verticalCenter
                             }
+                        }
+
+                        // synapse filter: type a cell name to narrow the list
+                        // (and dim presets that don't touch it).
+                        CircuitField {
+                            width: parent.width
+                            height: 22
+                            placeholder: "filter: neuron (e.g. ADFL)"
+                            value: circuit.filterText
+                            onEdited: function(v) { circuit.filterText = v; circuit.rebuildView() }
                         }
 
                         // presets
@@ -542,6 +609,11 @@ Item {
                                     color: Qt.rgba(0.55, 0.45, 0.9, 0.2)
                                     border.color: Qt.rgba(0.8, 0.7, 1, 0.4)
                                     border.width: 1
+                                    // Dim presets whose patches don't touch the
+                                    // current filter: shows at a glance which
+                                    // presets are relevant.
+                                    opacity: circuit.presetMatches(modelData.patches,
+                                        String(circuit.filterText).toUpperCase()) ? 1 : 0.3
 
                                     Text {
                                         id: presetTxt
@@ -601,24 +673,21 @@ Item {
                                 anchors.margins: 8
                                 spacing: 3
                                 clip: true
-                                model: editorModel
+                                // Master list stays in editorModel (session
+                                // edits are never lost on hidden rows); the
+                                // visible list is the filtered key array.
+                                model: circuit.viewKeys
 
                                 delegate: SynapseRow {
                                     width: ListView.view.width
-                                    from: model.from
-                                    to: model.to
-                                    base: model.base
-                                    weight: model.weight
+                                    from: circuit.keyFrom(modelData)
+                                    to: circuit.keyTo(modelData)
+                                    base: circuit.keyBase(modelData)
+                                    weight: circuit.keyWeight(modelData)
                                     maxWeight: circuit.maxWeight
-                                    live: model.weight !== model.base
-                                    onChanged: {
-                                        editorModel.setProperty(model.index, "weight", w)
-                                        circuit.sync()
-                                    }
-                                    onRemove: {
-                                        editorModel.setProperty(model.index, "weight", model.base)
-                                        circuit.sync()
-                                    }
+                                    live: circuit.keyWeight(modelData) !== circuit.keyBase(modelData)
+                                    onChanged: circuit.keySetWeight(modelData, w)
+                                    onRemove: circuit.keySetWeight(modelData, circuit.keyBase(modelData))
                                 }
 
                                 Text {
@@ -653,7 +722,7 @@ CircuitField {
                                   height: 22
                                   placeholder: "from cell (ADFL)"
                                   value: circuit.fromField
-                                  onEdited: circuit.fromField = v
+                                  onEdited: function(v) { circuit.fromField = v }
                                 }
                                 CircuitField {
                                   id: toEdit
@@ -661,7 +730,7 @@ CircuitField {
                                   height: 22
                                   placeholder: "to cell (SMDVL)"
                                   value: circuit.toField
-                                  onEdited: circuit.toField = v
+                                  onEdited: function(v) { circuit.toField = v }
                                 }
                             }
 
@@ -926,7 +995,7 @@ CircuitField {
                         }
 
                         Text {
-                            text: journal.entries.length + " recorded · tap entry to re-apply"
+                            text: journal.entries.length + " recorded · ↺ re-apply · 🗑 delete"
                             color: Qt.rgba(0.6, 0.6, 0.65, 1)
                             font.pixelSize: 8
                         }
@@ -949,7 +1018,10 @@ CircuitField {
 
                                 Column {
                                     anchors.fill: parent
-                                    anchors.margins: 7
+                                    anchors.leftMargin: 7
+                                    anchors.topMargin: 7
+                                    anchors.bottomMargin: 7
+                                    anchors.rightMargin: 40
                                     spacing: 3
 
                                     Text {
@@ -975,6 +1047,36 @@ CircuitField {
                                                 ? " · state: " + modelData.results.stateContext : "")
                                         color: Qt.rgba(0.6, 0.6, 0.65, 1)
                                         font.pixelSize: 8
+                                    }
+                                }
+
+                                // explicit re-apply / delete actions (the whole
+                                // row also re-applies on click for muscle memory);
+                                // declared AFTER the row MouseArea so they sit on
+                                // top and win the hit test.
+                                Column {
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 5
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 3
+
+                                    Rectangle {
+                                        width: 30; height: 16; radius: 4
+                                        color: Qt.rgba(0.55, 0.45, 0.9, 0.25)
+                                        Text { anchors.centerIn: parent; text: "↺"; color: "white"; font.pixelSize: 9 }
+                                        MouseArea { anchors.fill: parent; onClicked: circuit.applyConfig(modelData.config) }
+                                    }
+                                    Rectangle {
+                                        width: 30; height: 16; radius: 4
+                                        color: Qt.rgba(0.9, 0.45, 0.35, 0.22)
+                                        Text { anchors.centerIn: parent; text: "🗑"; color: "white"; font.pixelSize: 9 }
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            onClicked: {
+                                                if (circuit.journal && typeof circuit.journal.remove === "function")
+                                                    circuit.journal.remove(modelData.id)
+                                            }
+                                        }
                                     }
                                 }
 

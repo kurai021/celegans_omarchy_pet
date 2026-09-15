@@ -15,7 +15,11 @@ Item {
     { "x": 124, "y": 396, "width": 50, "height": 32 },
     { "x": 470, "y": 352, "width": 42, "height": 38 },
     { "x": 324, "y": 58,  "width": 36, "height": 28 },
-    { "x": 238, "y": 246, "width": 46, "height": 34 }
+    { "x": 238, "y": 246, "width": 46, "height": 34 },
+    { "x": 400, "y": 520, "width": 37, "height": 45 },
+    { "x": 600, "y": 480, "width": 46, "height": 28 },
+    { "x": 800, "y": 400, "width": 44, "height": 38 },
+    { "x": 750, "y": 575, "width": 50, "height": 32 },
   ]
 
   // --- food ----------------------------------------------------------------
@@ -36,6 +40,10 @@ Item {
   // --- interaction ---------------------------------------------------------
   property bool allowFoodDrop: true
   property bool autoFeedEnabled: false   // host (Panel) flips on when hungry
+  // Pauses every world timer (auto feeder + pellet ageing) while the panel is
+  // closed; the pet can't eat while nobody is watching, so food must not keep
+  // falling in the background. Bound to the panel's opened state by the host.
+  property bool live: true
   // Lab placement mode: while set, clicks place a stimulus source instead of
   // dropping food. "none" | "thermo" | "chemB".
   property string labPlaceMode: "none"
@@ -65,7 +73,7 @@ Item {
   // self-sustaining: food spawns only when there is none left on the floor.
   Timer {
     interval: 15000
-    running: true
+    running: world.live
     repeat: true
     onTriggered: {
       if (!world.autoFeedEnabled || world.foodItems.length > 0) return
@@ -194,7 +202,7 @@ Item {
   // --- rendering -----------------------------------------------------------
   Timer {
     interval: 100
-    running: true
+    running: world.live
     repeat: true
     onTriggered: {
       var items = world.foodItems
