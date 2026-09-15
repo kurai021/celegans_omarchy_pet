@@ -223,10 +223,12 @@ poke visibly twitches it.
   in the sham.
 
 **Not (or fragile):**
-- At the gains the current panel's sliders allow (thermo ≤ 30, chem-B ≤ 45),
-  the injected charge stays sub-threshold in a mid-distance field: the Lab
-  readouts would show no cell activation. Amplification is required — which the
-  panel already provides as a future knob, and this phase quantifies it.
+- At the gains the current panel's sliders *alone* allow (thermo ≤ 30,
+  chem-B ≤ 45), the injected charge stays sub-threshold in a mid-distance
+  field: the Lab readouts would show no cell activation. Amplification is
+  required — the live panel ships it as the **⚡ ×3 amplify** toggle, which maps
+  **exactly** to the measured gains above (thermo 90, chem-B 135); a live
+  probe → charge readout shows the sub-threshold picture instead of hiding it.
 - The directional effect is seed-dependent (not a reliable homing signal) and
   collapses at the highest amplification (×5), reproducing Phase C's
   overdrive/saturation pattern.
@@ -351,3 +353,29 @@ reliably did not.
 - `experiments/circuit-tuner.js` — reproducible Phase A harness.
 - `experiments/results/circuit-tuner-<seed>.json`,
   `experiments/results/circuit-A-<seed>.tsv` — run outputs per seed.
+
+## Living-plugin notes (made the honest results visible, not faked)
+
+These changes exist so a curious non-technical user can SEE whether a stimulus
+or a wiring edit did anything, without reading JavaScript:
+
+- **Pet life pauses with the panel.** Energy/sleep/food only tick while the
+  panel is open (`PetState.lifeActive`, `World.live` + the auto feeder bound to
+  `root.opened`). Closing the plugin no longer starves the pet overnight; an
+  open-again pet is exactly where you left it.
+- **Tail poke is now visible.** Each poke flashes the body (`Pet.flashStartle`)
+  on top of the real (subtle) motor response from the wiring.
+- **Thermo / chemical-B show the honest sub-threshold picture.** The Lab reads
+  live `probe → charge` for both channels, plus a hint line ("crank the slider
+  higher") when charge is present but no cell fires yet — and the **⚡ ×3
+  amplify** toggle maps exactly onto the measured ×3 gains (thermo 90,
+  chem-B 135) where the harness saw a real taxis response.
+- **Applied circuits are visible in the HUD.** A 🧬 chip next to the name shows
+  how many patches are live from pet.json, so an applied edit is obvious even
+  with the Circuit overlay closed.
+- **Circuit editor search & restore.** A filter box narrows the synapse list to
+  the ones involving a typed cell (presets that don't touch it are dimmed), and
+  "■ end & restore" now rebuilds the editor from the restored wiring — the
+  window reflects exactly what the pet runs again.
+- **Journal load/delete.** Every saved experiment has explicit ↺ re-apply and
+  🗑 delete buttons (no hidden tap-to-reapply).
