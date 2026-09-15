@@ -241,18 +241,65 @@ Item {
         brainController.tailCooldown = 4 // ~0.4 s stimulus window
     }
 
+    // --- Phase A: Circuit Lab ----------------------------------------------
+    // Synapse patches overwrite REAL connectome weights on the fly (absolute
+    // override per "FROM:TO", applied by wrapping connectome[] in setup()).
+    // The Pet keeps the map that was "applied to pet" (loaded from pet.json
+    // at startup); the Circuit overlay edits a session copy on top and can
+    // commit it with commitCircuitSession(). An empty map is the untouched
+    // brain.
+    property var circuitPatches: ({})       // live map handed to the brain
+    property bool circuitSessionActive: false
+
+    // Apply a patch LIST [{from,to,weight}], a new object replaces the old.
+    function circuitMapFromList(list) {
+        var map = {}
+        list = list || []
+        for (var i = 0; i < list.length; i++) {
+            var e = list[i]
+            if (e && e.from && e.to && typeof e.weight === "number")
+                map[String(e.from) + ":" + String(e.to)] = e.weight
+        }
+        return map
+    }
+    function applyCircuitMap(map) {
+        var m = map || {}
+        var stored = {}
+        for (var k in m) stored[k] = m[k]
+        brainController.circuitPatches = stored
+        if (brainInstance && typeof brainInstance.setCircuitPatches === "function")
+            brainInstance.setCircuitPatches(stored)
+    }
+    // Convenience: list -> map -> apply.
+    function setLiveCircuit(list) {
+        brainController.applyCircuitMap(brainController.circuitMapFromList(list))
+    }
+    function clearLiveCircuit() { brainController.setLiveCircuit([]) }
+
+    // After "apply to pet": the persistent map becomes the session baseline too,
+    // so ending the session does not revert it.
+    function commitCircuitSession() {
+        if (brainController.labSnapshot) {
+            var snap = brainController.labSnapshot
+            snap.patches = {}
+            for (var k in brainController.circuitPatches) snap.patches[k] = brainController.circuitPatches[k]
+        }
+    }
+
     // --- Experiment isolation (Phase B) ------------------------------------
     // Deep copy of every synaptic charge + the contact state, so a Lab session
     // can always return the brain to the exact state it had before any
     // stimulus was injected. Charge arrays are reset every cycle by update();
-    // nothing here writes to pet.json.
+    // nothing here writes to pet.json. The snapshot also carries the active
+    // circuit patch map, so a Circuit session restores the exact same wiring.
     property var labSnapshot: null
     function snapshotBrain() {
         if (!brainInstance) return
         var b = brainInstance
-        var snap = { "post": {}, "next": b.nextState, "prev": b.thisState }
+        var snap = { "post": {}, "next": b.nextState, "prev": b.thisState, "patches": {} }
         for (var name in b.postSynaptic)
             snap.post[name] = [b.postSynaptic[name][0] || 0, b.postSynaptic[name][1] || 0]
+        for (var p in brainController.circuitPatches) snap.patches[p] = brainController.circuitPatches[p]
         brainController.labSnapshot = snap
     }
     function restoreBrain() {
@@ -267,6 +314,7 @@ Item {
         brainInstance.nextState = snap.next
         brainController.leftMotor = 0
         brainController.rightMotor = 0
+        brainController.applyCircuitMap(snap.patches)
         brainController.labSnapshot = null
     }
 }

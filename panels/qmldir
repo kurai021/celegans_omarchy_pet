@@ -5,3 +5,7 @@ ExperimentJournal 1.0 ExperimentJournal.qml
 LabSlider 1.0 LabSlider.qml
 LabPanel 1.0 LabPanel.qml
 CellRow 1.0 CellRow.qml
+CircuitField 1.0 CircuitField.qml
+SynapseRow 1.0 SynapseRow.qml
+WeightSlider 1.0 WeightSlider.qml
+CircuitPanel 1.0 CircuitPanel.qml

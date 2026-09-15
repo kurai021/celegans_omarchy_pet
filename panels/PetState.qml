@@ -33,6 +33,16 @@ Item {
   //                for now. Persisted additively so old pet.json files load.
   property var memory: { "handToFood": 0, "touchExposure": 0, "learnedOnce": false, "mealSites": {} }
 
+  // --- applied circuit (Phase A) -------------------------------------------
+  // Synapse patches the user committed with "apply to pet" in the Circuit Lab.
+  // Array of {from,to,weight} (absolute weight overrides on real synapses).
+  // Lives in pet.json because it IS part of the pet: it survives sessions,
+  // reloads and restarts; the overlay only edits an isolated session copy.
+  // Applied circuit patches (pet.json). Assignments emit the built-in
+  // `circuitChanged` property-change signal (BrainConnector seeds the live
+  // brain from it; the Circuit overlay listens and skips while editing).
+  property var circuit: []
+
   // --- tuning (learning) --------------------------------------------------
   property real handToFoodLearnThreshold: 5   // hand->food experiences to "get it"
   property real handToFoodCap: 12             // soft cap so it can't runaway
@@ -93,6 +103,17 @@ Item {
           if (d.memory.learnedOnce !== undefined) memory.learnedOnce = !!d.memory.learnedOnce;
           if (d.memory.mealSites !== undefined && typeof d.memory.mealSites === "object")
             memory.mealSites = d.memory.mealSites;
+        }
+        // Applied circuit patches; additive like memory, so old saves load.
+        if (d.circuit !== undefined && Array.isArray(d.circuit)) {
+          var applied = []
+          for (var c = 0; c < d.circuit.length; c++) {
+            var ce = d.circuit[c]
+            if (ce && typeof ce.from === "string" && typeof ce.to === "string"
+                && typeof ce.weight === "number") applied.push(ce)
+          }
+          circuit = applied
+          circuitChanged()
         }
       }
     } catch (e) { /* keep current values on malformed JSON */ }
@@ -173,6 +194,23 @@ Item {
     saveTimer.restart()
   }
 
+  // "Apply to pet" from the Circuit Lab: persist the committed patch list and
+  // tell anyone listening (BrainConnector seeds the live brain from it).
+  function setCircuit(list) {
+    var applied = []
+    list = list || []
+    for (var i = 0; i < list.length; i++) {
+      var e = list[i]
+      if (e && typeof e.from === "string" && typeof e.to === "string"
+          && typeof e.weight === "number") applied.push({ from: e.from, to: e.to, weight: e.weight })
+    }
+    circuit = applied
+    circuitChanged()
+    save()
+    changed()
+    return applied
+  }
+
   Timer {
     id: saveTimer
     interval: 2000
@@ -191,7 +229,8 @@ Item {
           touchExposure: state.memory.touchExposure,
           learnedOnce: state.memory.learnedOnce,
           mealSites: state.memory.mealSites
-        }
+        },
+        circuit: state.circuit
       };
       if (state.everNamed) {
         payload.petName = state.petName;

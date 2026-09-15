@@ -4782,7 +4782,79 @@ Brain.prototype.setup = function () {
     ps['PVPL'][state] += 2
     ps['VA12'][state] += 1
   };
+
+  /* Phase A Circuit Lab: inspect the real synapses (base weights per (from,to))
+   * and wrap every connectome entry so an absolute patch map can override them
+   * at runtime. The wrappers read this.circuitPatches on every call, so
+   * changing the map is immediate and "no patches" is bit-identical to the
+   * untouched connectome. */
+  this.circuitPatches = {};
+  this.synapseBase = {};
+  this.installCircuitPatches();
 }
+
+/* Build this.synapseBase[from][to] = base weight by running each connectome
+ * entry exactly once against a scratch accumulator (the functions only ever
+ * write ps[target][state] += w, so state=0 records the contribution). */
+Brain.prototype.installCircuitPatches = function () {
+  if (this.circuitPatchesInstalled) return;   /* setup() is idempotent-safe */
+  this.circuitPatchesInstalled = true;
+  var sources = [];
+  for (var name in this.connectome) sources.push(name);
+
+  for (var i = 0; i < sources.length; i++) {
+    var from = sources[i];
+    var sc = {};
+    for (var t in this.postSynaptic) sc[t] = [0, 0];
+    this.connectome[from](sc, 0);
+    var out = {};
+    for (t in sc) if (sc[t][0] !== 0) out[t] = sc[t][0];
+    this.synapseBase[from] = out;
+  }
+
+  var self = this;
+  for (i = 0; i < sources.length; i++) {
+    (function (cell) {
+      var original = self.connectome[cell];
+      self.connectome[cell] = function (ps, state) {
+        original(ps, state);
+        var patches = self.circuitPatches;
+        if (!patches) return;
+        var fromBase = self.synapseBase[cell];
+        for (var key in patches) {
+          var sep = key.indexOf(":");
+          if (sep <= 0) continue;
+          if (key.substring(0, sep) !== cell) continue;
+          var to = key.substring(sep + 1);
+          if (!ps[to]) continue;
+          var base = fromBase ? (fromBase[to] || 0) : 0;
+          ps[to][state] += patches[key] - base;
+        }
+      };
+    })(sources[i]);
+  }
+};
+
+/* Absolute override map "FROM:TO" -> weight. Empty map == untouched brain. */
+Brain.prototype.setCircuitPatches = function (map) {
+  this.circuitPatches = map || {};
+};
+
+/* Flat list of every real synapse: [{from,to,base}] (read-only). */
+Brain.prototype.synapseList = function () {
+  var out = [];
+  for (var from in this.synapseBase) {
+    var es = this.synapseBase[from];
+    for (var to in es) out.push({ from: from, to: to, base: es[to] });
+  }
+  return out;
+};
+
+Brain.prototype.synapseBaseOf = function (from, to) {
+  if (this.synapseBase[from] && this.synapseBase[from][to] !== undefined)
+    return this.synapseBase[from][to];
+  return 0;
+};
 
 Brain.prototype.update = function () {
   /* Observation log for the current cycle (see constructor comment). */

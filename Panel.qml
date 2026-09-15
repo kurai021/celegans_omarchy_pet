@@ -18,7 +18,7 @@ Panel {
   property string petNameSetting: root.setting("petName", "")
   onPetNameSettingChanged: root.seedSetting()
   Component.onCompleted: root.seedSetting()
-  onOpenedChanged: if (!root.opened) { root.mindOpen = false; root.expertOpen = false; root.labOpen = false }
+  onOpenedChanged: if (!root.opened) { root.mindOpen = false; root.expertOpen = false; root.labOpen = false; root.circuitOpen = false }
 
   function seedSetting() {
     if (petState) petState.seedName(String(root.petNameSetting || ""))
@@ -55,6 +55,9 @@ Panel {
   // Phase B Stimulus Lab: third overlay, same ladder, opened from Mind. Its
   // session snapshots the brain and never writes to pet.json.
   property bool labOpen: false
+  // Phase A Circuit Lab: fourth overlay, opened from Mind. Same snapshot
+  // isolation; only the explicit "apply to pet" writes to pet.json.
+  property bool circuitOpen: false
 
   function commitRename() {
     var name = renameField.text
@@ -87,11 +90,23 @@ Panel {
 
   // Observation pipeline for the Expert View. Does zero work while the
   // overlay is closed (its Connections are disabled), and never writes back.
-  // The Lab overlay shares it so its live readout sees the same real signals.
+  // The Lab and Circuit overlays share it so their live readouts see the same
+  // real signals.
   Panels.ConnectomeMonitor {
     id: monitor
     brainController: brainController
-    active: root.expertOpen || root.labOpen
+    active: root.expertOpen || root.labOpen || root.circuitOpen
+  }
+
+  // Phase A: the pet's applied circuit patches seed the live brain as soon as
+  // pet.json has loaded (and after each "apply to pet"), except while the
+  // Circuit overlay is actively editing its own session copy.
+  Connections {
+    target: petState
+    function onCircuitChanged() {
+      if (!root.circuitOpen && petState && brainController)
+        brainController.setLiveCircuit(petState.circuit)
+    }
   }
 
   // Phase B: persistent journal of Lab experiments (separate file from pet.json).
@@ -106,9 +121,9 @@ Panel {
     owner: root.hostWidget || root
     open: root.opened
     focusTarget: keyCatcher
-    contentWidth: panel.fittedContentWidth(root.expertOpen || root.labOpen ? 880 : 640)
-    contentHeight: panel.fittedContentHeight(root.expertOpen || root.labOpen ? 640 : 480)
-    centerOnBar: root.expertOpen || root.labOpen
+    contentWidth: panel.fittedContentWidth(root.expertOpen || root.labOpen || root.circuitOpen ? 960 : 640)
+    contentHeight: panel.fittedContentHeight(root.expertOpen || root.labOpen || root.circuitOpen ? 640 : 480)
+    centerOnBar: root.expertOpen || root.labOpen || root.circuitOpen
 
     PanelKeyCatcher {
       id: keyCatcher
@@ -330,7 +345,7 @@ Panel {
         // nothing here feeds back into the simulation or moves the worm.
         Rectangle {
           id: mindOverlay
-          visible: root.mindOpen && !root.needsOnboarding && !root.expertOpen && !root.labOpen
+          visible: root.mindOpen && !root.needsOnboarding && !root.expertOpen && !root.labOpen && !root.circuitOpen
           z: 100
           width: Math.min(parent.width - 40, 420)
           height: Math.min(parent.height - 70, 380)
@@ -360,8 +375,39 @@ Panel {
 
               Item {
                 width: parent.width - mindTitle.width - expertBtn.implicitWidth
-                    - labBtn.implicitWidth - closeMindBtn.width - parent.spacing * 4
+                    - labBtn.implicitWidth - circuitBtn.implicitWidth - closeMindBtn.width
+                    - parent.spacing * 5
                 height: 1
+              }
+
+              Rectangle {
+                id: circuitBtn
+                implicitWidth: circuitBtnText.implicitWidth + 14
+                implicitHeight: 18
+                anchors.verticalCenter: parent.verticalCenter
+                radius: 9
+                color: Qt.rgba(0.62, 0.5, 0.95, 0.28)
+                border.color: Qt.rgba(0.85, 0.75, 1, 0.5)
+                border.width: 1
+
+                Text {
+                  id: circuitBtnText
+                  anchors.centerIn: parent
+                  text: "🧬 circuit"
+                  color: "white"
+                  font.pixelSize: 9
+                  font.bold: true
+                }
+
+                MouseArea {
+                  anchors.fill: parent
+                  onClicked: {
+                    // Enter the circuit lab (tune real synapses, no consequences
+                    // until an explicit "apply to pet").
+                    root.mindOpen = false
+                    root.circuitOpen = true
+                  }
+                }
               }
 
               Rectangle {
@@ -556,6 +602,24 @@ Panel {
           journal: journal
           onClosed: root.labOpen = false
           onToMind: { root.labOpen = false; root.mindOpen = true }
+        }
+
+        // 🧬 Phase A Circuit Lab: the fourth rung of the ladder. Same snapshot
+        // isolation as the Lab (brain + patch map restored on close); the only
+        // path that writes to pet.json is the explicit "apply to pet".
+        Panels.CircuitPanel {
+          id: circuitView
+          anchors.fill: parent
+          anchors.margins: 10
+          visible: root.circuitOpen && !root.needsOnboarding
+          z: 103
+          pet: pet
+          petState: petState
+          monitor: monitor
+          brainController: brainController
+          journal: journal
+          onClosed: root.circuitOpen = false
+          onToMind: { root.circuitOpen = false; root.mindOpen = true }
         }
       }
     }
