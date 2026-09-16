@@ -995,7 +995,7 @@ CircuitField {
                         }
 
                         Text {
-                            text: journal.entries.length + " recorded · ↺ re-apply · 🗑 delete"
+                            text: journal.entries.length + " recorded · ▲▼ move · ↺ re-apply · 🗑 delete"
                             color: Qt.rgba(0.6, 0.6, 0.65, 1)
                             font.pixelSize: 10
                         }
@@ -1018,7 +1018,7 @@ CircuitField {
 
                                 Column {
                                     anchors.fill: parent
-                                    anchors.leftMargin: 7
+                                    anchors.leftMargin: 44
                                     anchors.topMargin: 7
                                     anchors.bottomMargin: 7
                                     anchors.rightMargin: 40
@@ -1050,11 +1050,39 @@ CircuitField {
                                     }
                                 }
 
-                                // explicit re-apply / delete actions (the whole
-                                // row also re-applies on click for muscle memory);
-                                // declared AFTER the row MouseArea so they sit on
-                                // top and win the hit test.
+                                // Move the entry up/down in the list (the ↺ button is the only way
+                                // to re-apply, and 🗑 the only way to delete).
                                 Column {
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 5
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 3
+
+                                    Rectangle {
+                                        width: 34; height: 20; radius: 4
+                                        color: Qt.rgba(0.45, 1, 0.9, 0.14)
+                                        Text { anchors.centerIn: parent; text: "▲"; color: "white"; font.pixelSize: 10 }
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            onClicked: if (circuit.journal && typeof circuit.journal.moveBy === "function")
+                                                circuit.journal.moveBy(modelData.id, -1)
+                                        }
+                                    }
+                                    Rectangle {
+                                        width: 34; height: 20; radius: 4
+                                        color: Qt.rgba(0.45, 1, 0.9, 0.14)
+                                        Text { anchors.centerIn: parent; text: "▼"; color: "white"; font.pixelSize: 10 }
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            onClicked: if (circuit.journal && typeof circuit.journal.moveBy === "function")
+                                                circuit.journal.moveBy(modelData.id, 1)
+                                        }
+                                    }
+                                }
+
+                                // explicit re-apply / delete actions.
+                                Column {
+                                    z: 1
                                     anchors.right: parent.right
                                     anchors.rightMargin: 5
                                     anchors.verticalCenter: parent.verticalCenter
@@ -1078,11 +1106,6 @@ CircuitField {
                                             }
                                         }
                                     }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: circuit.applyConfig(modelData.config)
                                 }
                             }
                         }

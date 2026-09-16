@@ -69,6 +69,27 @@ Item {
   function count() { return journal.entries.length }
   function at(i) { return journal.entries[i] }
 
+  // --- move-one up/down (▲/▼ reorder buttons in the panels) -------------------
+  function findIndex(id) {
+    for (var i = 0; i < journal.entries.length; i++)
+      if (journal.entries[i].id === id) return i
+    return -1
+  }
+
+  // Swap the entry with `id` one position up (-1) or down (+1) and persist.
+  // Unknown ids and edges are no-ops.
+  function moveBy(id, delta) {
+    var cur = journal.findIndex(id)
+    if (cur < 0 || delta === 0) return
+    var to = cur + delta
+    if (to < 0 || to >= journal.entries.length) return
+    var arr = journal.entries.slice()
+    var e = arr.splice(cur, 1)[0]
+    arr.splice(to, 0, e)
+    journal.entries = arr
+    journal.save()
+  }
+
   // Delete one entry by id and persist. Unknown ids are ignored.
   function remove(id) {
     var list = []
