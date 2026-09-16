@@ -9,7 +9,7 @@ This plugin implements a simplified simulation of the C. elegans nervous system,
 ## 🚀 Installation
 
 ```sh
-omarchy plugin add https://github.com/kurai021/celegans-pet.git --enable
+omarchy plugin add https://github.com/kurai021/celegans_omarchy_pet.git --enable
 ```
 
 ## 🖥️ Requirements
